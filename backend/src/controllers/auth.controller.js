@@ -1,7 +1,9 @@
+//this 3 requires are used in both login and signup
 const bcrypt = require('bcryptjs'); 
 const User = require('../models/user.model');
 const jwt = require('jsonwebtoken');
 
+//signup controller
 exports.signup = async (req,res) => {
 
     try {
@@ -53,6 +55,7 @@ exports.signup = async (req,res) => {
 };
 
 
+//login controller
 exports.login = async (req,res) => {
 
     try {
