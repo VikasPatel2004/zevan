@@ -1,15 +1,18 @@
 const express = require('express');
 const cors = require('cors');
 
+//this are the imports of the routes of the following module 
 const authRoutes = require('./routes/auth.routes');
+const messRoutes = require('./routes/mess.routes');
 
 const app = express();
+
+//route mounting paths -> this let the express to use the routes of the following module 
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', authRoutes); // for auth routes
+app.use('/api/mess', messRoutes); // for mess routes
 
 app.get('/', (req,res) => {
     res.send("Jhevan Backend Running");
