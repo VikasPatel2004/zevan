@@ -8,9 +8,9 @@ exports.getOwnerDashboard = async (req, res) => {
 
     try {
 
-        const today = new Date()
-            .toISOString()
-            .split('T')[0];
+        const today = new Date().toLocaleDateString('en-CA', {
+            timeZone: 'Asia/Kolkata'
+        });
 
         const mess = await Mess.findOne({
             owner: req.user.id
