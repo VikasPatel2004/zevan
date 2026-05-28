@@ -14,6 +14,14 @@ router.post(
    messController.createMess
 );
 
+// route for joining the mess with auth and role middleware as only resident can join the mess 
+router.post(
+   '/join',
+   authMiddleware,
+   roleMiddleware('RESIDENT'),
+   messController.joinMess
+);
+
 
 
 

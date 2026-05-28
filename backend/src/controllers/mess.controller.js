@@ -1,5 +1,7 @@
 const Mess = require('../models/mess.model');
+const Resident = require('../models/resident.model');
 
+// creating the mess this is done by the owner only 
 exports.createMess = async (req,res) => {
 
     try {
@@ -38,6 +40,66 @@ exports.createMess = async (req,res) => {
             success: true,
             message: "Mess created successfully",
             mess
+        });
+
+    } catch(error) {
+
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+
+    }
+
+};
+
+// joining the mess this is done by the resident only 
+exports.joinMess = async (req,res) => {
+
+    try {
+
+        const { joinCode } = req.body;
+
+        const mess = await Mess.findOne({ joinCode });
+
+        if(!mess) {
+
+            return res.status(404).json({
+                success: false,
+                message: "Invalid join code"
+            });
+
+        }
+
+        const existingResident = await Resident.findOne({
+
+            user: req.user.id,
+            mess: mess._id
+
+        });
+
+        if(existingResident) {
+
+            return res.status(400).json({
+                success: false,
+                message: "Already joined this mess"
+            });
+
+        }
+
+        const resident = await Resident.create({
+
+            user: req.user.id,
+            mess: mess._id,
+
+            planType: 'FULL'
+
+        });
+
+        res.status(201).json({
+            success: true,
+            message: "Joined mess successfully",
+            resident
         });
 
     } catch(error) {
