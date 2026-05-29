@@ -1,7 +1,9 @@
 const Leave = require('../models/leave.model');
 const Resident = require('../models/resident.model');
+const User = require('../models/user.model');
+const Activity = require('../models/activity.model');
 
-// this is for resident to apply for leave 
+// Resident applies for leave
 exports.applyLeave = async (req,res) => {
 
     try {
@@ -42,6 +44,19 @@ exports.applyLeave = async (req,res) => {
 
         });
 
+        const user = await User.findById(req.user.id);
+
+        // Activity Feed Entry
+        await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Leave Request',
+
+            description: `${user.name} applied for leave`
+
+        });
+
         res.status(201).json({
 
             success:true,
@@ -68,8 +83,7 @@ exports.applyLeave = async (req,res) => {
 
 };
 
-//approved leaves by the owner only 
-
+// Owner approves leave
 exports.approveLeave = async (req,res) => {
 
     try {
@@ -95,14 +109,29 @@ exports.approveLeave = async (req,res) => {
 
         await leave.save();
 
-        const resident =
-            await Resident.findById(
-                leave.resident._id
-            );
+        const resident = await Resident.findById(
+            leave.resident._id
+        );
 
         resident.usedLeaves += 1;
 
         await resident.save();
+
+        const residentUser = await User.findById(
+            resident.user
+        );
+
+        // Activity Feed Entry
+        await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Leave Approved',
+
+            description:
+                `${residentUser.name}'s leave was approved`
+
+        });
 
         res.status(200).json({
 

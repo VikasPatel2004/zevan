@@ -1,8 +1,9 @@
 const Menu = require('../models/menu.model');
 const Mess = require('../models/mess.model');
 const Resident = require('../models/resident.model');
+const Activity = require('../models/activity.model');
 
-// Update the menu if exist if not create it 
+// Update the menu if exists, if not create it
 exports.updateMenu = async (req,res) => {
 
     try {
@@ -40,6 +41,17 @@ exports.updateMenu = async (req,res) => {
 
             await menu.save();
 
+            // Activity Feed Entry
+            await Activity.create({
+
+                mess: mess._id,
+
+                title: 'Menu Updated',
+
+                description: 'Today menu updated'
+
+            });
+
         } else {
 
             menu = await Menu.create({
@@ -50,6 +62,17 @@ exports.updateMenu = async (req,res) => {
 
                 breakfast,
                 dinner
+
+            });
+
+            // Activity Feed Entry
+            await Activity.create({
+
+                mess: mess._id,
+
+                title: 'Menu Created',
+
+                description: 'Today menu created'
 
             });
 
@@ -76,7 +99,7 @@ exports.updateMenu = async (req,res) => {
 
 };
 
-// this for resident to get todays menu 
+// Resident gets today's menu
 exports.getTodayMenu = async (req,res) => {
 
     try {

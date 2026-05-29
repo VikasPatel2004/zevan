@@ -1,8 +1,12 @@
 const Recharge = require('../models/recharge.model');
 const Resident = require('../models/resident.model');
+const Activity = require('../models/activity.model');
+const User = require('../models/user.model');
 
 exports.addRecharge = async (req, res) => {
+
     try {
+
         const {
             residentId,
             amountPaid,
@@ -11,62 +15,137 @@ exports.addRecharge = async (req, res) => {
         } = req.body;
 
         // Basic validation
-        if (!residentId || !amountPaid || !mealsAdded || !paymentMethod) {
+        if (
+            !residentId ||
+            !amountPaid ||
+            !mealsAdded ||
+            !paymentMethod
+        ) {
+
             return res.status(400).json({
+
                 success: false,
-                message: 'All fields are required (residentId, amountPaid, mealsAdded, paymentMethod)'
+
+                message:
+                'All fields are required (residentId, amountPaid, mealsAdded, paymentMethod)'
+
             });
+
         }
 
         const resident = await Resident.findById(residentId);
 
         if (!resident) {
+
             return res.status(404).json({
+
                 success: false,
+
                 message: 'Resident not found'
+
             });
+
         }
 
-        // Convert to numbers to avoid calculation issues
         const addMeals = Number(mealsAdded);
+
         const paidAmount = Number(amountPaid);
 
-        if (isNaN(addMeals) || isNaN(paidAmount)) {
+        if (
+            isNaN(addMeals) ||
+            isNaN(paidAmount)
+        ) {
+
             return res.status(400).json({
+
                 success: false,
-                message: 'Amount paid and meals added must be numbers'
+
+                message:
+                'Amount paid and meals added must be numbers'
+
             });
+
         }
 
-        resident.totalPurchasedMeals = (resident.totalPurchasedMeals || 0) + addMeals;
-        resident.mealsRemaining = (resident.mealsRemaining || 0) + addMeals;
+        resident.totalPurchasedMeals =
+            (resident.totalPurchasedMeals || 0)
+            + addMeals;
+
+        resident.mealsRemaining =
+            (resident.mealsRemaining || 0)
+            + addMeals;
 
         await resident.save();
 
         const recharge = await Recharge.create({
+
             resident: residentId,
+
             amountPaid: paidAmount,
+
             mealsAdded: addMeals,
+
             paymentMethod,
+
             addedBy: req.user.id
+
+        });
+
+        // Get owner name
+        const owner = await User.findById(req.user.id);
+
+        // Activity Feed Entry
+        await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Recharge Added',
+
+            description:
+                `${owner.name} added ${addMeals} meals`
+
         });
 
         res.status(201).json({
+
             success: true,
+
             message: 'Recharge added successfully',
+
             recharge,
+
             wallet: {
-                totalPurchasedMeals: resident.totalPurchasedMeals,
-                mealsConsumed: resident.mealsConsumed || 0,
-                mealsRemaining: resident.mealsRemaining
+
+                totalPurchasedMeals:
+                    resident.totalPurchasedMeals,
+
+                mealsConsumed:
+                    resident.mealsConsumed || 0,
+
+                mealsRemaining:
+                    resident.mealsRemaining
+
             }
+
         });
 
-    } catch (error) {
-        console.error("Error in addRecharge:", error);
-        res.status(500).json({
-            success: false,
-            message: error.message
-        });
     }
+
+    catch (error) {
+
+        console.error(
+            'Error in addRecharge:',
+            error
+        );
+
+        res.status(500).json({
+
+            success: false,
+
+            message: error.message
+
+        });
+
+    }
+
 };
