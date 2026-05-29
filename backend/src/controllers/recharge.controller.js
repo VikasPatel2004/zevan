@@ -1,6 +1,7 @@
 const Recharge = require('../models/recharge.model');
 const Resident = require('../models/resident.model');
 const Activity = require('../models/activity.model');
+const Notification = require('../models/notification.model');
 const User = require('../models/user.model');
 
 exports.addRecharge = async (req, res) => {
@@ -91,11 +92,22 @@ exports.addRecharge = async (req, res) => {
 
         });
 
-        // Get owner name
         const owner = await User.findById(req.user.id);
 
         // Activity Feed Entry
         await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Recharge Added',
+
+            description:
+                `${owner.name} added ${addMeals} meals`
+
+        });
+
+        // Notification Entry
+        await Notification.create({
 
             mess: resident.mess,
 

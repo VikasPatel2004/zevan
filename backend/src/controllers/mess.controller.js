@@ -2,6 +2,7 @@ const Mess = require('../models/mess.model');
 const Resident = require('../models/resident.model');
 const User = require('../models/user.model');
 const Activity = require('../models/activity.model');
+const Notification = require('../models/notification.model');
 
 // creating the mess this is done by the owner only
 exports.createMess = async (req, res) => {
@@ -17,7 +18,6 @@ exports.createMess = async (req, res) => {
             rules
         } = req.body;
 
-        // generating the join code for the mess
         const joinCode = Math.random()
             .toString(36)
             .substring(2, 8)
@@ -31,15 +31,24 @@ exports.createMess = async (req, res) => {
             ownerPhone,
             monthlyPrice,
             rules,
-
             joinCode,
-
             owner: req.user.id
 
         });
 
-        // Activity Feed Entry
+        // Activity
         await Activity.create({
+
+            mess: mess._id,
+
+            title: 'Mess Created',
+
+            description: `${messName} mess was created`
+
+        });
+
+        // Notification
+        await Notification.create({
 
             mess: mess._id,
 
@@ -136,8 +145,19 @@ exports.joinMess = async (req, res) => {
 
         const user = await User.findById(req.user.id);
 
-        // Activity Feed Entry
+        // Activity
         await Activity.create({
+
+            mess: mess._id,
+
+            title: 'New Resident Joined',
+
+            description: `${user.name} joined the mess`
+
+        });
+
+        // Notification
+        await Notification.create({
 
             mess: mess._id,
 

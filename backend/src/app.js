@@ -15,6 +15,7 @@ const attendanceHistoryRoutes = require('./routes/attendanceHistory.route');
 const ratingRoutes = require('./routes/rating.route');
 const profileRoutes = require('./routes/profile.route');
 const activityRoutes = require('./routes/activity.route');
+const notificationRoutes = require('./routes/notification.route');
 
 const app = express();
 
@@ -35,6 +36,7 @@ app.use('/api/attendance-history',attendanceHistoryRoutes); // for attendance hi
 app.use('/api/rating',ratingRoutes); // for rating routes
 app.use('/api/profile',profileRoutes); // for profile routes
 app.use('/api/activity',activityRoutes); // for activity routes
+app.use('/api/notification',notificationRoutes); // for notification routes
 
 app.get('/', (req,res) => {
     res.send("Jhevan Backend Running");

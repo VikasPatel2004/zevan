@@ -2,6 +2,7 @@ const Menu = require('../models/menu.model');
 const Mess = require('../models/mess.model');
 const Resident = require('../models/resident.model');
 const Activity = require('../models/activity.model');
+const Notification = require('../models/notification.model');
 
 // Update the menu if exists, if not create it
 exports.updateMenu = async (req,res) => {
@@ -41,8 +42,19 @@ exports.updateMenu = async (req,res) => {
 
             await menu.save();
 
-            // Activity Feed Entry
+            // Activity
             await Activity.create({
+
+                mess: mess._id,
+
+                title: 'Menu Updated',
+
+                description: 'Today menu updated'
+
+            });
+
+            // Notification
+            await Notification.create({
 
                 mess: mess._id,
 
@@ -65,8 +77,19 @@ exports.updateMenu = async (req,res) => {
 
             });
 
-            // Activity Feed Entry
+            // Activity
             await Activity.create({
+
+                mess: mess._id,
+
+                title: 'Menu Created',
+
+                description: 'Today menu created'
+
+            });
+
+            // Notification
+            await Notification.create({
 
                 mess: mess._id,
 

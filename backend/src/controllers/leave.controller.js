@@ -2,6 +2,7 @@ const Leave = require('../models/leave.model');
 const Resident = require('../models/resident.model');
 const User = require('../models/user.model');
 const Activity = require('../models/activity.model');
+const Notification = require('../models/notification.model');
 
 // Resident applies for leave
 exports.applyLeave = async (req,res) => {
@@ -46,8 +47,19 @@ exports.applyLeave = async (req,res) => {
 
         const user = await User.findById(req.user.id);
 
-        // Activity Feed Entry
+        // Activity
         await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Leave Request',
+
+            description: `${user.name} applied for leave`
+
+        });
+
+        // Notification
+        await Notification.create({
 
             mess: resident.mess,
 
@@ -105,6 +117,18 @@ exports.approveLeave = async (req,res) => {
 
         }
 
+        if(leave.status === 'APPROVED'){
+
+            return res.status(400).json({
+
+                success:false,
+
+                message:'Leave already approved'
+
+            });
+
+        }
+
         leave.status = 'APPROVED';
 
         await leave.save();
@@ -121,8 +145,20 @@ exports.approveLeave = async (req,res) => {
             resident.user
         );
 
-        // Activity Feed Entry
+        // Activity
         await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Leave Approved',
+
+            description:
+                `${residentUser.name}'s leave was approved`
+
+        });
+
+        // Notification
+        await Notification.create({
 
             mess: resident.mess,
 
