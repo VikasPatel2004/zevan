@@ -13,6 +13,7 @@ const residentDashboardRoutes = require('./routes/residentDashboard.route');
 const paymentRoutes = require('./routes/payment.route');
 const attendanceHistoryRoutes = require('./routes/attendanceHistory.route');
 const ratingRoutes = require('./routes/rating.route');
+const profileRoutes = require('./routes/profile.route');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/api/resident-dashboard',residentDashboardRoutes); // for resident dash
 app.use('/api/payment',paymentRoutes); // for payment routes
 app.use('/api/attendance-history',attendanceHistoryRoutes); // for attendance history routes
 app.use('/api/rating',ratingRoutes); // for rating routes
+app.use('/api/profile',profileRoutes); // for profile routes
 
 app.get('/', (req,res) => {
     res.send("Jhevan Backend Running");
