@@ -33,7 +33,19 @@ exports.markAttendance = async (req, res) => {
 
         });
 
+        let mealsToDeduct = 0;
+
         if (attendance) {
+
+            // Morning deduction
+            if (!attendance.morning && morning) {
+                mealsToDeduct += 1;
+            }
+
+            // Evening deduction
+            if (!attendance.evening && evening) {
+                mealsToDeduct += 1;
+            }
 
             attendance.morning = morning;
             attendance.evening = evening;
@@ -41,6 +53,9 @@ exports.markAttendance = async (req, res) => {
             await attendance.save();
 
         } else {
+
+            if (morning) mealsToDeduct += 1;
+            if (evening) mealsToDeduct += 1;
 
             attendance = await Attendance.create({
 
@@ -59,17 +74,60 @@ exports.markAttendance = async (req, res) => {
 
         }
 
+        // Wallet Update
+        if (mealsToDeduct > 0) {
+
+            if (resident.mealsRemaining < mealsToDeduct) {
+
+                return res.status(400).json({
+
+                    success: false,
+
+                    message: "Insufficient meal balance"
+
+                });
+
+            }
+
+            resident.mealsConsumed += mealsToDeduct;
+
+            resident.mealsRemaining -= mealsToDeduct;
+
+            await resident.save();
+
+        }
+
         res.status(200).json({
+
             success: true,
+
             message: "Attendance marked successfully",
-            attendance
+
+            attendance,
+
+            wallet: {
+
+                totalPurchasedMeals:
+                    resident.totalPurchasedMeals,
+
+                mealsConsumed:
+                    resident.mealsConsumed,
+
+                mealsRemaining:
+                    resident.mealsRemaining
+
+            }
+
         });
 
     } catch (error) {
 
         res.status(500).json({
+
             success: false,
+
             message: error.message
+
         });
 
     }

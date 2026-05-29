@@ -43,7 +43,18 @@ const residentSchema = new mongoose.Schema({
     mealsRemaining:{
         type:Number,
         default:0
-    }
+    },
+
+    // this is for the leave system 
+    allowedLeaves:{
+    type:Number,
+    default:10
+},
+
+usedLeaves:{
+    type:Number,
+    default:0
+}
 
 },{timestamps:true});
 

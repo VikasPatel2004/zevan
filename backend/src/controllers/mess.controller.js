@@ -99,7 +99,9 @@ exports.joinMess = async (req,res) => {
 
    mealsConsumed:0,
 
-   mealsRemaining:0
+   mealsRemaining:0,
+   allowedLeaves:10,
+   usedLeaves:0
 
 });
 

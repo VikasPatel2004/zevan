@@ -8,6 +8,7 @@ const attendanceRoutes = require('./routes/attendance.route');
 const dashboardRoutes = require('./routes/dashboard.route');
 const menuRoutes = require('./routes/menu.route');
 const rechargeRoutes = require('./routes/recharge.route');
+const leaveRoutes = require('./routes/leave.route');
 
 const app = express();
 
@@ -21,6 +22,7 @@ app.use('/api/attendance', attendanceRoutes); // for attendance routes
 app.use('/api/dashboard', dashboardRoutes); // for dashboard routes
 app.use('/api/menu', menuRoutes); // for menu routes
 app.use('/api/recharge', rechargeRoutes); // for recharge routes
+app.use('/api/leave',leaveRoutes); // for leave routes
 
 app.get('/', (req,res) => {
     res.send("Jhevan Backend Running");
