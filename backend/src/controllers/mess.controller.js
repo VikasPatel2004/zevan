@@ -89,12 +89,19 @@ exports.joinMess = async (req,res) => {
 
         const resident = await Resident.create({
 
-            user: req.user.id,
-            mess: mess._id,
+   user:req.user.id,
 
-            planType: 'FULL'
+   mess:mess._id,
 
-        });
+   planType:'FULL',
+
+   totalPurchasedMeals:0,
+
+   mealsConsumed:0,
+
+   mealsRemaining:0
+
+});
 
         res.status(201).json({
             success: true,

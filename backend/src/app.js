@@ -7,7 +7,7 @@ const messRoutes = require('./routes/mess.routes');
 const attendanceRoutes = require('./routes/attendance.route');
 const dashboardRoutes = require('./routes/dashboard.route');
 const menuRoutes = require('./routes/menu.route');
-const billRoutes = require('./routes/bill.route');
+const rechargeRoutes = require('./routes/recharge.route');
 
 const app = express();
 
@@ -20,7 +20,7 @@ app.use('/api/mess', messRoutes); // for mess routes
 app.use('/api/attendance', attendanceRoutes); // for attendance routes
 app.use('/api/dashboard', dashboardRoutes); // for dashboard routes
 app.use('/api/menu', menuRoutes); // for menu routes
-app.use('/api/bill', billRoutes); // for bill routes
+app.use('/api/recharge', rechargeRoutes); // for recharge routes
 
 app.get('/', (req,res) => {
     res.send("Jhevan Backend Running");
