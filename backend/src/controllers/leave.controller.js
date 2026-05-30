@@ -47,7 +47,6 @@ exports.applyLeave = async (req,res) => {
 
         const user = await User.findById(req.user.id);
 
-        // Activity
         await Activity.create({
 
             mess: resident.mess,
@@ -58,7 +57,6 @@ exports.applyLeave = async (req,res) => {
 
         });
 
-        // Notification
         await Notification.create({
 
             mess: resident.mess,
@@ -145,7 +143,6 @@ exports.approveLeave = async (req,res) => {
             resident.user
         );
 
-        // Activity
         await Activity.create({
 
             mess: resident.mess,
@@ -157,7 +154,6 @@ exports.approveLeave = async (req,res) => {
 
         });
 
-        // Notification
         await Notification.create({
 
             mess: resident.mess,
@@ -174,6 +170,98 @@ exports.approveLeave = async (req,res) => {
             success:true,
 
             message:'Leave approved'
+
+        });
+
+    }
+
+    catch(error){
+
+        res.status(500).json({
+
+            success:false,
+
+            message:error.message
+
+        });
+
+    }
+
+};
+
+// Owner rejects leave
+exports.rejectLeave = async (req,res)=>{
+
+    try{
+
+        const { leaveId } = req.params;
+
+        const leave = await Leave.findById(leaveId)
+            .populate('resident');
+
+        if(!leave){
+
+            return res.status(404).json({
+
+                success:false,
+
+                message:'Leave not found'
+
+            });
+
+        }
+
+        if(leave.status === 'REJECTED'){
+
+            return res.status(400).json({
+
+                success:false,
+
+                message:'Leave already rejected'
+
+            });
+
+        }
+
+        leave.status = 'REJECTED';
+
+        await leave.save();
+
+        const resident = await Resident.findById(
+            leave.resident._id
+        );
+
+        const residentUser = await User.findById(
+            resident.user
+        );
+
+        await Activity.create({
+
+            mess: resident.mess,
+
+            title: 'Leave Rejected',
+
+            description:
+                `${residentUser.name}'s leave was rejected`
+
+        });
+
+        await Notification.create({
+
+            mess: resident.mess,
+
+            title: 'Leave Rejected',
+
+            description:
+                `${residentUser.name}'s leave was rejected`
+
+        });
+
+        res.status(200).json({
+
+            success:true,
+
+            message:'Leave rejected'
 
         });
 

@@ -2,8 +2,8 @@ const express = require('express');
 
 const router = express.Router();
 
-const leaveController =
-require('../controllers/leave.controller');
+const residentController =
+require('../controllers/resident.controller');
 
 const authMiddleware =
 require('../middleware/auth.middleware');
@@ -11,25 +11,18 @@ require('../middleware/auth.middleware');
 const roleMiddleware =
 require('../middleware/role.middleware');
 
-router.post(
-    '/apply',
+router.get(
+    '/details/:residentId',
     authMiddleware,
-    roleMiddleware('RESIDENT'),
-    leaveController.applyLeave
+    roleMiddleware('OWNER'),
+    residentController.getResidentDetails
 );
 
 router.put(
-    '/approve/:leaveId',
+    '/deactivate/:residentId',
     authMiddleware,
     roleMiddleware('OWNER'),
-    leaveController.approveLeave
-);
-
-router.put(
-    '/reject/:leaveId',
-    authMiddleware,
-    roleMiddleware('OWNER'),
-    leaveController.rejectLeave
+    residentController.deactivateResident
 );
 
 module.exports = router;

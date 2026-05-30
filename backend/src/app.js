@@ -16,6 +16,7 @@ const ratingRoutes = require('./routes/rating.route');
 const profileRoutes = require('./routes/profile.route');
 const activityRoutes = require('./routes/activity.route');
 const notificationRoutes = require('./routes/notification.route');
+const residentRoutes = require('./routes/resident.route'); // here we show resident detail to owner and he can also deactivate the resident
 
 const app = express();
 
@@ -37,6 +38,7 @@ app.use('/api/rating',ratingRoutes); // for rating routes
 app.use('/api/profile',profileRoutes); // for profile routes
 app.use('/api/activity',activityRoutes); // for activity routes
 app.use('/api/notification',notificationRoutes); // for notification routes
+app.use('/api/resident',residentRoutes); // for resident routes
 
 app.get('/', (req,res) => {
     res.send("Jhevan Backend Running");

@@ -34,13 +34,12 @@ exports.getDashboard = async (req,res) => {
 
         });
 
-        const attendance = await Attendance.find({
+        const totalAttendance =
+        await Attendance.countDocuments({
 
             resident:resident._id
 
         });
-
-        const totalAttendance = attendance.length;
 
         res.status(200).json({
 
@@ -70,8 +69,17 @@ exports.getDashboard = async (req,res) => {
                 attendanceCount:
                     totalAttendance,
 
+                planType:
+                    resident.planType,
+
+                joiningDate:
+                    resident.joiningDate,
+
+                isActive:
+                    resident.isActive,
+
                 todayMenu:
-                    menu
+                    menu || {}
 
             }
 

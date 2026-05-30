@@ -23,4 +23,11 @@ router.get(
 
 );
 
+router.put(
+    '/read/:id',
+    authMiddleware,
+    roleMiddleware('OWNER'),
+    notificationController.markAsRead
+);
+
 module.exports = router;
