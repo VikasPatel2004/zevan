@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Utensils, MapPin, Store, ChevronRight, ArrowRight } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
+import { ROUTES } from '../routes/routes';
 
 const Logo = () => (
   <div className="flex flex-col items-center justify-center mb-10">
@@ -83,7 +84,7 @@ export default function LoginPage() {
               icon={MapPin}
               title="Find a Mess Nearby"
               description="Discover the best homemade food options in your area. Browse menus, read reviews, and subscribe to a mess."
-              onClick={() => handleSelection('/discover')}
+              onClick={() => handleSelection(ROUTES.DISCOVER)}
               isHovered={hoveredCard === 'customer'}
               onHover={() => setHoveredCard('customer')}
               onLeave={() => setHoveredCard(null)}
@@ -96,7 +97,7 @@ export default function LoginPage() {
               icon={Store}
               title="Login as Mess Owner"
               description="Manage your mess, update menus, track subscriptions, and grow your customer base with our tools."
-              onClick={() => handleSelection('/owner')}
+              onClick={() => handleSelection(ROUTES.OWNER)}
               isHovered={hoveredCard === 'owner'}
               onHover={() => setHoveredCard('owner')}
               onLeave={() => setHoveredCard(null)}

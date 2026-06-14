@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { ChevronLeft, Star, Shield, MapPin, Calendar, Clock, MessageSquare, Plus } from 'lucide-react';
-import { MESS_LIST, DAYS } from '../data';
+import { MESS_LIST } from '../data/mockMesses';
+import { DAYS } from '../data/mockMenus';
 import BrandLogo from '../components/BrandLogo';
 import LoginModal from '../components/LoginModal';
+import { ROUTES } from '../routes/routes';
 
 export default function MessDetailsPage() {
   const { id } = useParams();
@@ -24,7 +26,7 @@ export default function MessDetailsPage() {
         <span className="text-5xl mb-4">⚠️</span>
         <h2 className="font-display text-2xl font-bold text-brand-secondary">Mess Not Found</h2>
         <p className="text-warm-500 mt-2">The tiffin service or mess profile you are trying to visit does not exist.</p>
-        <Link to="/discover" className="mt-6 bg-brand-primary text-white px-6 py-3 rounded-xl hover:bg-brand-secondary transition-colors btn-press shadow-premium-md">
+        <Link to={ROUTES.DISCOVER} className="mt-6 bg-brand-primary text-white px-6 py-3 rounded-xl hover:bg-brand-secondary transition-colors btn-press shadow-premium-md">
           Go Back to Search
         </Link>
       </div>
@@ -54,14 +56,14 @@ export default function MessDetailsPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-background/90 backdrop-blur-md border-b border-brand-surface/40 shadow-premium-sm">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/discover" className="text-warm-500 hover:text-brand-primary transition-colors p-1.5 rounded-full hover:bg-brand-surface/50 flex items-center gap-1">
+            <Link to={ROUTES.DISCOVER} className="text-warm-500 hover:text-brand-primary transition-colors p-1.5 rounded-full hover:bg-brand-surface/50 flex items-center gap-1">
               <ChevronLeft size={20} />
               <span className="text-xs font-semibold uppercase tracking-wider hidden sm:inline">Back to Search</span>
             </Link>
           </div>
           <BrandLogo variant="full" size="navbar" />
           <div className="flex items-center gap-7 text-sm font-medium text-warm-600">
-            <Link to="/discover" className="hover:text-brand-primary transition-colors">Find a Mess</Link>
+            <Link to={ROUTES.DISCOVER} className="hover:text-brand-primary transition-colors">Find a Mess</Link>
             <button onClick={() => setLoginOpen(true)} className="btn btn-primary btn-md">Login</button>
           </div>
         </div>
@@ -288,7 +290,7 @@ export default function MessDetailsPage() {
               <h3 className="font-display text-xl font-bold text-brand-secondary mb-6">Similar Mess Recommendations</h3>
               <div className="grid sm:grid-cols-2 gap-6">
                 {recommendations.map(rec => (
-                  <Link key={rec.id} to={`/messes/${rec.id}`} className="block global-card-hover overflow-hidden bg-brand-background/35">
+                  <Link key={rec.id} to={ROUTES.MESS_DETAILS.replace(':id', rec.id)} className="block global-card-hover overflow-hidden bg-brand-background/35">
                     <div className="h-28 bg-gradient-to-tr from-brand-surface to-brand-background relative flex items-center justify-center border-b border-brand-surface/20">
                       <span className="text-3xl">🍲</span>
                       <div className="absolute top-2 right-2 bg-white/90 shadow-premium-sm px-2.5 py-0.5 rounded-full flex items-center gap-0.5 text-[10px] font-bold text-brand-secondary">

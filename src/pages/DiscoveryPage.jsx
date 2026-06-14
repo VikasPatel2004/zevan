@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Star, Shield, MapPin, ChevronLeft } from 'lucide-react';
-import { MESS_LIST } from '../data';
+import { MESS_LIST } from '../data/mockMesses';
 import BrandLogo from '../components/BrandLogo';
 import LoginModal from '../components/LoginModal';
+import { ROUTES } from '../routes/routes';
 
 export default function DiscoveryPage() {
   const [search, setSearch] = useState('');
@@ -28,13 +29,13 @@ export default function DiscoveryPage() {
       <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-background/90 backdrop-blur-md border-b border-brand-surface/40 shadow-premium-sm">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link to="/" className="text-warm-500 hover:text-brand-primary transition-colors p-1.5 rounded-full hover:bg-brand-surface/50 flex items-center gap-1">
+            <Link to={ROUTES.HOME} className="text-warm-500 hover:text-brand-primary transition-colors p-1.5 rounded-full hover:bg-brand-surface/50 flex items-center gap-1">
               <ChevronLeft size={20} />
             </Link>
             <BrandLogo variant="full" size="navbar" />
           </div>
           <div className="flex items-center gap-7 text-sm font-medium text-warm-600">
-            <Link to="/discover" className="hover:text-brand-primary transition-colors">Find a Mess</Link>
+            <Link to={ROUTES.DISCOVER} className="hover:text-brand-primary transition-colors">Find a Mess</Link>
             <button onClick={() => setLoginOpen(true)} className="btn btn-primary btn-md">Login</button>
           </div>
         </div>
@@ -115,7 +116,7 @@ export default function DiscoveryPage() {
 
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {filtered.map((m, i) => (
-                <Link key={m.id} to={`/messes/${m.id}`} className={`global-card-hover overflow-hidden animate-fade-in-up flex flex-col h-full delay-${Math.min(i + 1, 6) * 100}`}>
+                <Link key={m.id} to={ROUTES.MESS_DETAILS.replace(':id', m.id)} className={`global-card-hover overflow-hidden animate-fade-in-up flex flex-col h-full delay-${Math.min(i + 1, 6) * 100}`}>
                   {/* Card visual banner block */}
                   <div className="h-36 bg-gradient-to-tr from-brand-surface to-brand-background relative flex items-center justify-center border-b border-brand-surface/20">
                     <span className="text-4xl">🍲</span>
