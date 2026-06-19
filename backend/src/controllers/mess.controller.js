@@ -129,7 +129,7 @@ exports.joinMess = async (req, res) => {
 
             mess: mess._id,
 
-            planType: 'FULL',
+            planType: 'Both',
 
             totalPurchasedMeals: 0,
 
@@ -180,13 +180,24 @@ exports.joinMess = async (req, res) => {
     } catch (error) {
 
         res.status(500).json({
-
             success: false,
-
             message: error.message
-
         });
-
     }
+};
 
+// get all messes for discovery page
+exports.getAllMesses = async (req, res) => {
+    try {
+        const messes = await Mess.find().populate('owner', 'name');
+        res.status(200).json({
+            success: true,
+            messes
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
 };

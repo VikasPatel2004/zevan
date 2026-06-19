@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, ClipboardList, CreditCard, MessageCircle, Users, CalendarCheck, Receipt, Share2, Star, ChevronRight, Menu, X } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 import LoginModal from '../components/LoginModal';
+import { ROUTES } from '../routes/routes';
 
 function CountUp({ end, duration = 2000 }) {
   const [count, setCount] = useState(0);

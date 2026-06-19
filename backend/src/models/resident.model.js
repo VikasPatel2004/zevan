@@ -16,8 +16,8 @@ const residentSchema = new mongoose.Schema({
 
     planType:{
         type:String,
-        enum:['FULL','HALF'],
-        default:'FULL'
+        enum:['FULL', 'HALF', 'Both', 'Lunch', 'Dinner'],
+        default:'Both'
     },
 
     joiningDate:{
@@ -41,6 +41,11 @@ const residentSchema = new mongoose.Schema({
     },
 
     mealsRemaining:{
+        type:Number,
+        default:0
+    },
+
+    overdueMeals:{
         type:Number,
         default:0
     },

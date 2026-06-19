@@ -22,6 +22,12 @@ router.post(
    messController.joinMess
 );
 
+// route for getting all messes for discovery page
+router.get(
+    '/all',
+    messController.getAllMesses
+);
+
 
 
 

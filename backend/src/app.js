@@ -24,6 +24,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
 app.use('/api/auth', authRoutes); // for auth routes
 app.use('/api/mess', messRoutes); // for mess routes
 app.use('/api/attendance', attendanceRoutes); // for attendance routes

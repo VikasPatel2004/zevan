@@ -17,10 +17,23 @@ router.post(
 );
 
 router.get(
-   '/today',
-   authMiddleware,
-   roleMiddleware('RESIDENT'),
-   menuController.getTodayMenu
+    '/weekly',
+    authMiddleware,
+    menuController.getWeeklyMenu
+);
+
+router.post(
+    '/weekly/update',
+    authMiddleware,
+    roleMiddleware('OWNER'),
+    menuController.updateWeeklyMenu
+);
+
+router.get(
+    '/today',
+    authMiddleware,
+    roleMiddleware('RESIDENT'),
+    menuController.getResidentTodayMenu
 );
 
 module.exports = router;

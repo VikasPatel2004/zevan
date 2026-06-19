@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { X, Eye, EyeOff, Loader2, ArrowRight, User, Mail, Lock, GraduationCap, Store, Phone, MapPin, CreditCard } from 'lucide-react';
 import BrandLogo from './BrandLogo';
 import { authApi } from '../services/authApi';
-import { messApi } from '../services/messApi';
+import { useAuth } from '../contexts/AuthContext';
 import { ROUTES } from '../routes/routes';
 
 export default function LoginModal({ isOpen, onClose, defaultTab = 'student', mode = 'login' }) {
@@ -27,6 +27,7 @@ export default function LoginModal({ isOpen, onClose, defaultTab = 'student', mo
   const [joinCode, setJoinCode] = useState('');
 
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   useEffect(() => {
     if (isOpen) {
@@ -51,32 +52,23 @@ export default function LoginModal({ isOpen, onClose, defaultTab = 'student', mo
       } else {
         if (!name.trim()) throw new Error('Please enter your full name.');
         
-        // Register User first
-        response = await authApi.register({ name, email, password, role });
-
-        if (response.success) {
-          localStorage.setItem('token', response.token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          
-          // Primary account created, now handle Mess logic
-          if (role === 'OWNER') {
-            await messApi.createMess({
-              messName,
-              address: messAddress,
-              upiId,
-              ownerPhone,
-              monthlyPrice: Number(monthlyPrice)
-            });
-          } else {
-            if (!joinCode) throw new Error('Please enter a Mess Join Code.');
-            await messApi.joinMess(joinCode.trim());
-          }
-        }
+        // Single atomic signup for User + Mess/Resident linking
+        response = await authApi.register({ 
+          name, 
+          email, 
+          password, 
+          role,
+          joinCode: role === 'RESIDENT' ? joinCode.trim() : undefined,
+          messName: role === 'OWNER' ? messName : undefined,
+          address: role === 'OWNER' ? messAddress : undefined,
+          upiId: role === 'OWNER' ? upiId : undefined,
+          ownerPhone: role === 'OWNER' ? ownerPhone : undefined,
+          monthlyPrice: role === 'OWNER' ? Number(monthlyPrice) : undefined
+        });
       }
 
       if (response.success) {
-        localStorage.setItem('token', response.token);
-        localStorage.setItem('user', JSON.stringify(response.user));
+        login(response.token, response.user);
         onClose();
         navigate(response.user.role === 'OWNER' ? ROUTES.OWNER : ROUTES.STUDENT);
       }

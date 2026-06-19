@@ -1,9 +1,11 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, ChevronLeft, Menu, X, Shield, LogOut } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
+import { useAuth } from '../contexts/AuthContext';
 
 const TAB_ITEMS = [
-  { id: 'today', label: 'Today\'s Log', icon: CalendarCheck },
+  { id: 'today', label: 'Overview', icon: Settings },
+  { id: 'attendance', label: 'Daily Presence Maker', icon: CalendarCheck },
   { id: 'students', label: 'Student Directory', icon: Users },
   { id: 'billing', label: 'Billing Manager', icon: Receipt },
   { id: 'menu', label: 'Menu Schedule', icon: UtensilsCrossed },
@@ -19,10 +21,10 @@ export default function OwnerLayout({
   onMobileMenuToggle,
 }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/');
   };
   return (

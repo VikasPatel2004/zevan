@@ -11,8 +11,21 @@ const roleMiddleware = require('../middleware/role.middleware');
 router.post(
    '/mark',
    authMiddleware,
-   roleMiddleware('OWNER'),
    attendanceController.markAttendance
+);
+
+router.get(
+    '/today',
+    authMiddleware,
+    roleMiddleware('OWNER'),
+    attendanceController.getTodayAttendance
+);
+
+router.post(
+    '/bulk-mark',
+    authMiddleware,
+    roleMiddleware('OWNER'),
+    attendanceController.bulkMarkAttendance
 );
 
 module.exports = router;

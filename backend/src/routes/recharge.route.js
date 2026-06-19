@@ -18,4 +18,17 @@ router.post(
    rechargeController.addRecharge
 );
 
+router.get(
+    '/history',
+    authMiddleware,
+    rechargeController.getRechargeHistory
+);
+
+router.get(
+    '/residents',
+    authMiddleware,
+    roleMiddleware('OWNER'),
+    rechargeController.getResidentThaliStatus
+);
+
 module.exports = router;

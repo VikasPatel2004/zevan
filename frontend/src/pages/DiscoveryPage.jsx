@@ -4,22 +4,45 @@ import { Search, Star, Shield, MapPin, ChevronLeft } from 'lucide-react';
 import { MESS_LIST } from '../data/mockMesses';
 import BrandLogo from '../components/BrandLogo';
 import LoginModal from '../components/LoginModal';
+import { useAuth } from '../contexts/AuthContext';
 import { ROUTES } from '../routes/routes';
+import { messApi } from '../services/messApi';
 
 export default function DiscoveryPage() {
+  const [messes, setMesses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState({ cuisine: 'All', price: 'All' });
   const [loginOpen, setLoginOpen] = useState(false);
+  const { isAuthenticated, user } = useAuth();
+
+  const fetchData = async () => {
+    try {
+      const response = await messApi.getAllMesses();
+      if (response.success) {
+        setMesses(response.messes);
+      }
+    } catch (err) {
+      console.error('Failed to fetch messes:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useState(() => {
+    fetchData();
+  }, []);
 
   const toggleFilter = (key, value) => {
     setFilters(f => ({ ...f, [key]: f[key] === value ? 'All' : value }));
   };
 
-  const filtered = MESS_LIST.filter(m => {
-    if (search && !m.name.toLowerCase().includes(search.toLowerCase()) && !m.city.toLowerCase().includes(search.toLowerCase())) return false;
+  const filtered = messes.filter(m => {
+    const nameMatch = m.messName?.toLowerCase().includes(search.toLowerCase()) || m.city?.toLowerCase().includes(search.toLowerCase());
+    if (search && !nameMatch) return false;
     if (filters.cuisine !== 'All' && m.cuisine !== filters.cuisine && m.cuisine !== 'Both') return false;
-    if (filters.price === 'Under ₹3000' && m.price >= 3000) return false;
-    if (filters.price === 'Under ₹4000' && m.price >= 4000) return false;
+    if (filters.price === 'Under ₹3000' && m.monthlyPrice >= 3000) return false;
+    if (filters.price === 'Under ₹4000' && m.monthlyPrice >= 4000) return false;
     return true;
   });
 
@@ -37,7 +60,11 @@ export default function DiscoveryPage() {
           </div>
           <div className="flex items-center gap-7 text-sm font-medium text-warm-600">
             <Link to={ROUTES.DISCOVER} className="hover:text-brand-primary transition-colors">Find a Mess</Link>
-            <button onClick={() => setLoginOpen(true)} className="btn btn-primary btn-md">Login</button>
+            {isAuthenticated ? (
+              <Link to={user?.role === 'OWNER' ? ROUTES.OWNER : ROUTES.STUDENT} className="btn btn-primary btn-md">Dashboard</Link>
+            ) : (
+              <button onClick={() => setLoginOpen(true)} className="btn btn-primary btn-md">Login</button>
+            )}
           </div>
         </div>
       </nav>
@@ -118,44 +145,51 @@ export default function DiscoveryPage() {
            
            {/* This are the actual cards with there ids so will be routed on messdetail page with id */}
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {filtered.map((m, i) => (
-                <Link key={m.id} to={ROUTES.MESS_DETAILS.replace(':id', m.id)} className={`global-card-hover overflow-hidden animate-fade-in-up flex flex-col h-full delay-${Math.min(i + 1, 6) * 100}`}>
-                  {/* Card visual banner block */}
-                  <div className="h-36 bg-gradient-to-tr from-brand-surface to-brand-background relative flex items-center justify-center border-b border-brand-surface/20">
-                    <span className="text-4xl">🍲</span>
-                    <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm shadow-premium-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-xs font-semibold text-brand-secondary">
-                      <Star size={13} fill="currentColor" className="text-brand-accent" /> {m.rating}
-                    </div>
-                  </div>
-
-                  <div className="p-6 flex-1 flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-display text-lg font-bold text-brand-secondary leading-snug hover:text-brand-primary transition-colors">{m.name}</h3>
-                      <p className="text-xs text-warm-500 mt-1 flex items-center gap-1"><MapPin size={12} /> {m.distance} away • {m.city}</p>
-                      
-                      {/* Badges */}
-                      <div className="flex flex-wrap gap-1.5 mt-3.5">
-                        <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${m.cuisine === 'Veg' ? 'bg-forest-50 border border-forest-100 text-forest-700' : m.cuisine === 'Non-Veg' ? 'bg-terra-50 border border-terra-100 text-terra-500' : 'bg-brand-surface border border-brand-accent/20 text-brand-primary'}`}>{m.cuisine}</span>
-                        <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand-surface border border-brand-surface/60 text-brand-primary flex items-center gap-0.5"><Shield size={10} /> {m.hygiene} Grade</span>
-                      </div>
-
-                      {/* Inside today's menu layout */}
-                      <div className="mt-4 bg-brand-surface/50 border border-brand-surface/40 rounded-2xl p-3 shadow-inner">
-                        <p className="text-[9px] text-warm-500 uppercase tracking-wider font-semibold">Today's Menu</p>
-                        <p className="text-sm text-brand-secondary font-medium mt-1 truncate">{m.todayMenu}</p>
+              {isLoading ? (
+                /* Skeleton Loading */
+                [...Array(6)].map((_, i) => (
+                  <div key={i} className="global-card h-80 animate-pulse bg-brand-surface/20" />
+                ))
+              ) : (
+                filtered.map((m, i) => (
+                  <Link key={m._id} to={ROUTES.MESS_DETAILS.replace(':id', m._id)} className={`global-card-hover overflow-hidden animate-fade-in-up flex flex-col h-full delay-${Math.min(i + 1, 6) * 100}`}>
+                    {/* Card visual banner block */}
+                    <div className="h-36 bg-gradient-to-tr from-brand-surface to-brand-background relative flex items-center justify-center border-b border-brand-surface/20">
+                      <span className="text-4xl">🍲</span>
+                      <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm shadow-premium-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-xs font-semibold text-brand-secondary">
+                        <Star size={13} fill="currentColor" className="text-brand-accent" /> {m.rating || '4.5'}
                       </div>
                     </div>
 
-                    <div className="mt-5 pt-4 border-t border-brand-surface/30 flex items-center justify-between">
+                    <div className="p-6 flex-1 flex flex-col justify-between">
                       <div>
-                        <p className="text-[10px] text-warm-500 uppercase tracking-wider font-semibold">Monthly Plan</p>
-                        <p className="font-display text-xl font-bold text-brand-primary mt-0.5">₹{m.price.toLocaleString()}<span className="text-xs font-body text-warm-500 font-normal">/mo</span></p>
+                        <h3 className="font-display text-lg font-bold text-brand-secondary leading-snug hover:text-brand-primary transition-colors">{m.messName}</h3>
+                        <p className="text-xs text-warm-500 mt-1 flex items-center gap-1"><MapPin size={12} /> {m.city || 'Indore'} • Verified</p>
+                        
+                        {/* Badges */}
+                        <div className="flex flex-wrap gap-1.5 mt-3.5">
+                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${m.cuisine === 'Veg' ? 'bg-forest-50 border border-forest-100 text-forest-700' : m.cuisine === 'Non-Veg' ? 'bg-terra-50 border border-terra-100 text-terra-500' : 'bg-brand-surface border border-brand-accent/20 text-brand-primary'}`}>{m.cuisine || 'Veg'}</span>
+                          <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-brand-surface border border-brand-surface/60 text-brand-primary flex items-center gap-0.5"><Shield size={10} /> {m.hygiene || 'A'} Grade</span>
+                        </div>
+
+                        {/* Inside today's menu layout */}
+                        <div className="mt-4 bg-brand-surface/50 border border-brand-surface/40 rounded-2xl p-3 shadow-inner">
+                          <p className="text-[9px] text-warm-500 uppercase tracking-wider font-semibold">Mess Status</p>
+                          <p className="text-sm text-brand-secondary font-medium mt-1 truncate">{m.description || 'Accepting residents'}</p>
+                        </div>
                       </div>
-                      <span className="btn btn-secondary btn-sm">View Details →</span>
+
+                      <div className="mt-5 pt-4 border-t border-brand-surface/30 flex items-center justify-between">
+                        <div>
+                          <p className="text-[10px] text-warm-500 uppercase tracking-wider font-semibold">Monthly Plan</p>
+                          <p className="font-display text-xl font-bold text-brand-primary mt-0.5">₹{(m.monthlyPrice || 0).toLocaleString()}<span className="text-xs font-body text-warm-500 font-normal">/mo</span></p>
+                        </div>
+                        <span className="btn btn-secondary btn-sm">View Details →</span>
+                      </div>
                     </div>
-                  </div>
-                </Link>
-              ))}
+                  </Link>
+                ))
+              )}
             </div>
 
          {/* // This is that case when no mess is found by using the filters  */}

@@ -1,6 +1,7 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { Home, CalendarDays, Receipt, UtensilsCrossed, User, ChevronLeft, Menu, X, Shield, LogOut } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
+import { useAuth } from '../contexts/AuthContext';
 
 const TAB_ITEMS = [
   { id: 'home', label: 'Home Feed', icon: Home },
@@ -19,10 +20,10 @@ export default function StudentLayout({
   onMobileMenuToggle,
 }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    logout();
     navigate('/');
   };
   return (
