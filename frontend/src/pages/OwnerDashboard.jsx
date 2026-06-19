@@ -1,14 +1,45 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, Plus, X, Send, CheckCircle, Menu, ChevronLeft, Shield } from 'lucide-react';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, Plus, X, Send, CheckCircle, Menu, ChevronLeft, Shield, Loader2 } from 'lucide-react';
 import { OWNER_STUDENTS, OWNER_MESS, generateOwnerBilling } from '../data/mockStudents';
 import { DAYS, MONTHS, DEFAULT_OWNER_MENU } from '../data/mockMenus';
 import OwnerLayout from '../layouts/OwnerLayout';
+import { dashboardApi } from '../services/dashboardApi';
+import { ROUTES } from '../routes/routes';
 
 export default function OwnerDashboard() {
   const [tab, setTab] = useState('today');
   const [mealType, setMealType] = useState('lunch');
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [students, setStudents] = useState(OWNER_STUDENTS);
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!token) {
+      navigate(ROUTES.HOME);
+      return;
+    }
+
+    const fetchDashboard = async () => {
+      try {
+        const response = await dashboardApi.getOwnerDashboard();
+        if (response.success) {
+          setDashboardData(response.dashboard);
+        }
+      } catch (err) {
+        console.error('Failed to fetch owner dashboard:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, [token, navigate]);
+
   const [attendanceMap, setAttendanceMap] = useState(() => {
     const m = {};
     OWNER_STUDENTS.filter(s => s.status === 'Active').forEach(s => {
@@ -98,31 +129,55 @@ export default function OwnerDashboard() {
     setTimeout(() => setAttendanceSaved(false), 2500);
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-background">
+        <Loader2 className="w-10 h-10 text-brand-primary animate-spin" />
+      </div>
+    );
+  }
+
   return (
     <OwnerLayout
       activeTab={tab}
       onTabChange={setTab}
-      messName={OWNER_MESS.name}
-      ownerName={OWNER_MESS.ownerName}
+      messName={user?.messName || 'Your Mess'}
+      ownerName={user?.name || 'Owner'}
       mobileMenuOpen={mobileMenuOpen}
       onMobileMenuToggle={setMobileMenuOpen}
     >
       {/* ===== 1. TODAY'S ATTENDANCE LOG ===== */}
       {tab === 'today' && (
         <div className="space-y-6 animate-fade-in">
+          {/* Join Code Banner */}
+          <div className="global-card p-4 bg-brand-primary text-brand-accent flex flex-col sm:flex-row items-center justify-between gap-4 shadow-premium-md relative overflow-hidden">
+            <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
+              <Shield size={120} className="-mr-10 -mt-10" />
+            </div>
+            <div>
+              <p className="text-[10px] uppercase font-bold tracking-widest opacity-80">Your Unique Mess Join Code</p>
+              <h3 className="font-mono text-3xl font-black tracking-widest mt-1">{dashboardData?.joinCode || 'ZEVAN1'}</h3>
+            </div>
+            <div className="text-center sm:text-right max-w-xs">
+              <p className="text-xs font-medium text-white/90 leading-relaxed">Share this code with your students. They will need it to join your mess on the Zevan app.</p>
+            </div>
+          </div>
+
           {/* Daily Statistics Banner */}
           <div className="grid sm:grid-cols-3 gap-6">
             <div className="global-card p-6">
               <p className="text-xs text-warm-500 uppercase tracking-wider font-semibold">Active Students</p>
-              <p className="font-display text-3xl font-black text-brand-secondary mt-1">{OWNER_MESS.activeStudents}</p>
+              <p className="font-display text-3xl font-black text-brand-secondary mt-1">{dashboardData?.totalResidents || 0}</p>
             </div>
             <div className="global-card p-6">
               <p className="text-xs text-warm-500 uppercase tracking-wider font-semibold">Marked Present Today</p>
-              <p className="font-display text-3xl font-black text-forest-700 mt-1">{presentCount}</p>
+              <p className="font-display text-3xl font-black text-forest-700 mt-1">
+                {mealType === 'lunch' ? dashboardData?.morningCount : dashboardData?.eveningCount}
+              </p>
             </div>
             <div className="global-card p-6">
-              <p className="text-xs text-warm-500 uppercase tracking-wider font-semibold">Marked Absent Today</p>
-              <p className="font-display text-3xl font-black text-terra-500 mt-1">{todayStudents.length - presentCount}</p>
+              <p className="text-xs text-warm-500 uppercase tracking-wider font-semibold">Pending Leaves</p>
+              <p className="font-display text-3xl font-black text-terra-500 mt-1">{dashboardData?.pendingLeaves || 0}</p>
             </div>
           </div>
 
@@ -304,18 +359,18 @@ export default function OwnerDashboard() {
           <div className="global-card p-6 shadow-premium-md flex flex-col sm:flex-row gap-6 items-center">
             <div className="flex-1 text-center sm:text-left">
               <p className="text-xs text-warm-400 font-semibold uppercase">Total Revenue Collected</p>
-              <p className="font-display text-3xl font-black text-forest-700 mt-1">₹{billingSummary.paid.toLocaleString()}</p>
+              <p className="font-display text-3xl font-black text-forest-700 mt-1">₹{(dashboardData?.totalRevenue || 0).toLocaleString()}</p>
             </div>
             <div className="w-px h-12 bg-brand-surface hidden sm:block" />
             <div className="flex-1 text-center sm:text-left">
-              <p className="text-xs text-warm-400 font-semibold uppercase">Pending Outstanding Dues</p>
-              <p className="font-display text-3xl font-black text-brand-primary mt-1">₹{billingSummary.pending.toLocaleString()}</p>
+              <p className="text-xs text-warm-400 font-semibold uppercase">Monthly Goal</p>
+              <p className="font-display text-3xl font-black text-brand-primary mt-1">₹{(dashboardData?.totalResidents * 3000 || 0).toLocaleString()}</p>
             </div>
             <div className="w-px h-12 bg-brand-surface hidden sm:block" />
             <div className="flex-1 w-full">
-              <p className="text-xs text-warm-400 font-semibold uppercase text-center sm:text-left">Collection Rate</p>
+              <p className="text-xs text-warm-400 font-semibold uppercase text-center sm:text-left">Collection Progress</p>
               <div className="mt-2.5 h-2.5 bg-brand-surface rounded-full overflow-hidden">
-                <div className="h-full bg-forest-600 rounded-full" style={{ width: `${(billingSummary.paid / Math.max(billingSummary.paid + billingSummary.pending, 1)) * 100}%` }} />
+                <div className="h-full bg-forest-600 rounded-full" style={{ width: `${Math.min(100, (dashboardData?.totalRevenue / (dashboardData?.totalResidents * 3000 || 1)) * 100)}%` }} />
               </div>
             </div>
           </div>

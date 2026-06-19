@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, ChevronLeft, Menu, X, Shield } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
+import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, ChevronLeft, Menu, X, Shield, LogOut } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 
 const TAB_ITEMS = [
@@ -18,6 +18,13 @@ export default function OwnerLayout({
   mobileMenuOpen,
   onMobileMenuToggle,
 }) {
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    navigate('/');
+  };
   return (
     <div className="min-h-screen bg-brand-background flex">
       {/* 1. Desktop Sidebar Navigation */}
@@ -53,6 +60,13 @@ export default function OwnerLayout({
             <ChevronLeft size={16} />
             <span>Go to Marketplace</span>
           </Link>
+          <button 
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-bold text-terra-400 hover:text-terra-300 hover:bg-terra-500/10 transition-all mt-2"
+          >
+            <LogOut size={16} />
+            <span>Logout Session</span>
+          </button>
         </div>
       </aside>
 
@@ -112,6 +126,12 @@ export default function OwnerLayout({
               <Link to="/discover" className="flex items-center gap-2 text-xs font-bold text-warm-300 py-4 border-t border-brand-primary/20">
                 <ChevronLeft size={14} /> Back to Search
               </Link>
+              <button 
+                onClick={handleLogout}
+                className="flex items-center gap-2 text-xs font-bold text-terra-400 py-4 border-t border-brand-primary/20"
+              >
+                <LogOut size={14} /> Logout Session
+              </button>
             </div>
           </div>
         )}

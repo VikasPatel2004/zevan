@@ -1,25 +1,62 @@
-import { useState, useMemo } from 'react';
-import { Link } from 'react-router-dom';
-import { Home, CalendarDays, Receipt, UtensilsCrossed, User, ChevronLeft, Menu, X, Phone, MapPin, Shield } from 'lucide-react';
-import { CURRENT_STUDENT, generateAttendance } from '../data/mockStudents';
+import { useState, useMemo, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Home, CalendarDays, Receipt, UtensilsCrossed, User, ChevronLeft, Menu, X, Phone, MapPin, Shield, Loader2 } from 'lucide-react';
+import { generateAttendance } from '../data/mockStudents';
 import { DAYS, MONTHS, WEEKLY_MENU } from '../data/mockMenus';
 import StudentLayout from '../layouts/StudentLayout';
+import { dashboardApi } from '../services/dashboardApi';
+import { ROUTES } from '../routes/routes';
 
 export default function StudentDashboard() {
   const [tab, setTab] = useState('home');
+  const [dashboardData, setDashboardData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [attendance, setAttendance] = useState(() => generateAttendance());
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+
+  const user = JSON.parse(localStorage.getItem('user') || '{}');
+  const token = localStorage.getItem('token');
+
+  useEffect(() => {
+    if (!token) {
+      navigate(ROUTES.HOME);
+      return;
+    }
+
+    const fetchDashboard = async () => {
+      try {
+        const response = await dashboardApi.getStudentDashboard();
+        if (response.success) {
+          setDashboardData(response.dashboard);
+        }
+      } catch (err) {
+        console.error('Failed to fetch dashboard:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboard();
+  }, [token, navigate]);
 
   const today = new Date();
   const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const todayDayName = dayNames[today.getDay()];
-  const todayMenu = WEEKLY_MENU[todayDayName === 'Sun' ? 'Sun' : todayDayName] || WEEKLY_MENU.Mon;
+  
+  // Use today's menu from backend if available, otherwise fallback to mock
+  const menuFromBackend = dashboardData?.todayMenu;
+  const todayMenu = menuFromBackend && Object.keys(menuFromBackend).length > 0 
+    ? { lunch: menuFromBackend.lunch || 'Not specified', dinner: menuFromBackend.dinner || 'Not specified' }
+    : (WEEKLY_MENU[todayDayName === 'Sun' ? 'Sun' : todayDayName] || WEEKLY_MENU.Mon);
+
   const currentDay = today.getDate();
   const currentMonth = today.getMonth();
   const currentYear = today.getFullYear();
   const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
   const handleMealMark = (meal, status) => {
+    // In a real app, this would call an API (POST /api/attendance)
     setAttendance(prev => ({
       ...prev,
       [currentDay]: { ...prev[currentDay], [meal]: prev[currentDay]?.[meal] === status ? 'unmarked' : status }
@@ -27,27 +64,41 @@ export default function StudentDashboard() {
   };
 
   const stats = useMemo(() => {
-    let ate = 0, skipped = 0;
-    for (let d = 1; d <= currentDay; d++) {
-      const a = attendance[d];
-      if (a) {
-        if (a.lunch === 'ate') ate++;
-        if (a.dinner === 'ate') ate++;
-        if (a.lunch === 'skipped') skipped++;
-        if (a.dinner === 'skipped') skipped++;
+    let ate = dashboardData?.mealsConsumed || 0;
+    let totalPossible = dashboardData?.mealsPurchased || 60;
+    let amountDue = (dashboardData?.mealsConsumed / totalPossible) * (user?.monthlyRate || 3000);
+    
+    // Fallback if data is not yet loaded or partial
+    if (!dashboardData) {
+      ate = 0;
+      for (let d = 1; d <= currentDay; d++) {
+        const a = attendance[d];
+        if (a) {
+          if (a.lunch === 'ate') ate++;
+          if (a.dinner === 'ate') ate++;
+        }
       }
+      totalPossible = currentDay * 2;
+      amountDue = (ate / Math.max(totalPossible, 1)) * 3000;
     }
-    const totalPossible = currentDay * 2;
-    const amountDue = Math.round((ate / Math.max(totalPossible, 1)) * CURRENT_STUDENT.monthlyRate);
-    return { ate, skipped, totalPossible, amountDue };
-  }, [attendance, currentDay]);
+    
+    return { ate, totalPossible, amountDue: Math.round(amountDue) };
+  }, [attendance, currentDay, dashboardData, user]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-brand-background">
+        <Loader2 className="w-10 h-10 text-brand-primary animate-spin" />
+      </div>
+    );
+  }
 
   return (
     <StudentLayout
       activeTab={tab}
       onTabChange={setTab}
-      studentName={CURRENT_STUDENT.fullName}
-      messName={CURRENT_STUDENT.messName}
+      studentName={user?.name || 'Student'}
+      messName={dashboardData?.activeMessName || user?.messName || 'Your Mess'}
       mobileMenuOpen={mobileMenuOpen}
       onMobileMenuToggle={setMobileMenuOpen}
     >
@@ -76,8 +127,8 @@ export default function StudentDashboard() {
             <div className="global-card p-6 relative overflow-hidden">
               <span className="absolute -right-4 -bottom-4 text-7xl opacity-05 pointer-events-none">📍</span>
               <p className="text-xs text-warm-500 uppercase tracking-wider font-semibold">My Active Mess</p>
-              <p className="font-display text-lg font-black text-brand-secondary mt-2 truncate">{CURRENT_STUDENT.messName}</p>
-              <p className="text-xs text-warm-400 mt-4 font-semibold">{CURRENT_STUDENT.ownerName}</p>
+              <p className="font-display text-lg font-black text-brand-secondary mt-2 truncate">{dashboardData?.activeMessName || user?.messName || 'N/A'}</p>
+              <p className="text-xs text-warm-400 mt-4 font-semibold">{dashboardData?.ownerName || 'N/A'}</p>
             </div>
           </div>
 
@@ -150,21 +201,21 @@ export default function StudentDashboard() {
                     <User size={16} className="text-brand-accent" />
                     <div>
                       <p className="text-[10px] text-warm-400 font-semibold uppercase">Owner Name</p>
-                      <p className="font-semibold text-brand-secondary">{CURRENT_STUDENT.ownerName}</p>
+                      <p className="font-semibold text-brand-secondary">{dashboardData?.ownerName || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <Phone size={16} className="text-brand-accent" />
                     <div>
                       <p className="text-[10px] text-warm-400 font-semibold uppercase">Phone Number</p>
-                      <p className="font-semibold text-brand-secondary">{CURRENT_STUDENT.ownerPhone}</p>
+                      <p className="font-semibold text-brand-secondary">{dashboardData?.ownerPhone || 'N/A'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     <MapPin size={16} className="text-brand-accent" />
                     <div>
                       <p className="text-[10px] text-warm-400 font-semibold uppercase">Address</p>
-                      <p className="font-semibold text-brand-secondary leading-normal">{CURRENT_STUDENT.messAddress}</p>
+                      <p className="font-semibold text-brand-secondary leading-normal">{dashboardData?.messAddress || 'N/A'}</p>
                     </div>
                   </div>
                 </div>
@@ -265,11 +316,11 @@ export default function StudentDashboard() {
               <div className="space-y-3.5 text-xs text-warm-600">
                 <div className="flex justify-between"><span className="font-medium text-warm-400">Total possible meals</span><span className="font-bold text-brand-secondary">60 meals</span></div>
                 <div className="flex justify-between"><span className="font-medium text-warm-400">Meals attended (Ate)</span><span className="font-bold text-brand-secondary">{stats.ate} meals</span></div>
-                <div className="flex justify-between"><span className="font-medium text-warm-400">Subscription plan rate</span><span className="font-bold text-brand-secondary">₹{CURRENT_STUDENT.monthlyRate.toLocaleString()} / mo</span></div>
+                <div className="flex justify-between"><span className="font-medium text-warm-400">Subscription plan rate</span><span className="font-bold text-brand-secondary">₹{(user?.monthlyRate || 3000).toLocaleString()} / mo</span></div>
                 <div className="border-t border-brand-surface/30 pt-3.5 flex justify-between items-center text-xs">
                   <span className="font-medium text-warm-400">Formula</span>
                   <span className="font-mono text-brand-primary bg-brand-background px-2.5 py-1 rounded border border-brand-surface/80">
-                    ({stats.ate} / 60) × ₹{CURRENT_STUDENT.monthlyRate.toLocaleString()}
+                    ({stats.ate} / {stats.totalPossible}) × ₹{(user?.monthlyRate || 3000).toLocaleString()}
                   </span>
                 </div>
               </div>

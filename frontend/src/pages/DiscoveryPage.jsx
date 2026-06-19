@@ -25,6 +25,7 @@ export default function DiscoveryPage() {
 
   return (
     <div className="min-h-screen bg-brand-background pb-20 grain-overlay">
+      
       {/* Standardized Navbar Header */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-brand-background/90 backdrop-blur-md border-b border-brand-surface/40 shadow-premium-sm">
         <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12 h-20 flex items-center justify-between">
@@ -114,6 +115,8 @@ export default function DiscoveryPage() {
               <p className="text-xs font-semibold text-warm-500 bg-white border border-brand-surface/50 px-3 py-1.5 rounded-full shadow-premium-sm self-start sm:self-center">{filtered.length} service{filtered.length !== 1 ? 's' : ''} found</p>
             </div>
 
+           
+           {/* This are the actual cards with there ids so will be routed on messdetail page with id */}
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {filtered.map((m, i) => (
                 <Link key={m.id} to={ROUTES.MESS_DETAILS.replace(':id', m.id)} className={`global-card-hover overflow-hidden animate-fade-in-up flex flex-col h-full delay-${Math.min(i + 1, 6) * 100}`}>
@@ -154,6 +157,8 @@ export default function DiscoveryPage() {
                 </Link>
               ))}
             </div>
+
+         {/* // This is that case when no mess is found by using the filters  */}
 
             {/* Empty State */}
             {filtered.length === 0 && (

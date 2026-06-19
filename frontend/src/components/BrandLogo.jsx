@@ -29,9 +29,10 @@ export default function BrandLogo({
 
   // Use light wordmark on dark backgrounds
   const wordmarkSrc = inverted
-    ? '/logo-wordmark-light.svg'
+    ? '/logo-wordmark-light.svg' //this is the zevan text after logo
     : '/logo-wordmark.svg';
 
+    // now here we have written it in such a way that it will show the logo and the wordmark together
   const content = (
     <span className={`inline-flex items-center gap-2.5 ${className}`}>
       {(variant === 'full' || variant === 'icon') && (

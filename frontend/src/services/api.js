@@ -10,10 +10,12 @@ const handleResponse = async (response) => {
 
 export const api = {
   get: async (url, options = {}) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
         ...options.headers,
       },
       ...options,
@@ -22,10 +24,12 @@ export const api = {
   },
 
   post: async (url, body, options = {}) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
         ...options.headers,
       },
       body: JSON.stringify(body),
@@ -35,10 +39,12 @@ export const api = {
   },
 
   put: async (url, body, options = {}) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
         ...options.headers,
       },
       body: JSON.stringify(body),
@@ -48,10 +54,12 @@ export const api = {
   },
 
   delete: async (url, options = {}) => {
+    const token = localStorage.getItem('token');
     const response = await fetch(`${BASE_URL}${url}`, {
       method: 'DELETE',
       headers: {
         'Content-Type': 'application/json',
+        'Authorization': token ? `Bearer ${token}` : '',
         ...options.headers,
       },
       ...options,

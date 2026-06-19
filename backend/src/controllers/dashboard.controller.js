@@ -85,7 +85,9 @@ exports.getOwnerDashboard = async (req,res) => {
 
                 pendingLeaves,
 
-                totalRevenue:revenue
+                totalRevenue:revenue,
+
+                joinCode:mess.joinCode
 
             }
 

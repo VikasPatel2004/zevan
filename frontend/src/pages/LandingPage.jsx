@@ -79,8 +79,8 @@ export default function LandingPage() {
                 <Link to="/discover" className="btn btn-primary btn-lg">
                   Find a Mess Near Me
                 </Link>
-                <Link to="/owner" className="btn btn-secondary btn-lg">
-                  I'm a Mess Owner
+                <Link to="/discover" className="btn btn-secondary btn-lg">
+                  Explore Messes
                 </Link>
               </div>
             </div>
@@ -258,7 +258,7 @@ export default function LandingPage() {
           <p className="mt-4 text-white/70 text-lg animate-fade-in-up delay-100">Join the mess revolution. Whether you eat or you serve — ZEVAN makes it better.</p>
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center animate-fade-in-up delay-200">
             <Link to="/discover" className="btn btn-lg bg-white text-brand-primary border border-white hover:bg-brand-surface">Find a Mess</Link>
-            <Link to="/owner" className="btn btn-lg border border-white/40 text-white hover:bg-white/10">Register as Owner</Link>
+            <Link to="/discover" className="btn btn-lg border border-white/40 text-white hover:bg-white/10">Register as Owner</Link>
           </div>
         </div>
       </section>
