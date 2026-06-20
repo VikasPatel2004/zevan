@@ -75,6 +75,11 @@ const messSchema = new mongoose.Schema({
         Fri: { lunch: { type: String, default: '' }, dinner: { type: String, default: '' } },
         Sat: { lunch: { type: String, default: '' }, dinner: { type: String, default: '' } },
         Sun: { lunch: { type: String, default: '' }, dinner: { type: String, default: '' } },
+    },
+
+    images: {
+        type: [String],
+        default: []
     }
 
 }, { timestamps: true });

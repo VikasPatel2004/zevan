@@ -29,6 +29,13 @@ const ratingSchema = new mongoose.Schema({
     review:{
         type:String,
         default:''
+    },
+
+    hygieneRating:{
+        type:Number,
+        min:1,
+        max:5,
+        default:5
     }
 
 },{timestamps:true});

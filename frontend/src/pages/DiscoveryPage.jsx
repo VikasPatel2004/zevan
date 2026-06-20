@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, Star, Shield, MapPin, ChevronLeft } from 'lucide-react';
-import { MESS_LIST } from '../data/mockMesses';
+import { Search, Star, Shield, MapPin, ChevronLeft, Loader2 } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 import LoginModal from '../components/LoginModal';
 import { useAuth } from '../contexts/AuthContext';
@@ -16,20 +15,19 @@ export default function DiscoveryPage() {
   const [loginOpen, setLoginOpen] = useState(false);
   const { isAuthenticated, user } = useAuth();
 
-  const fetchData = async () => {
-    try {
-      const response = await messApi.getAllMesses();
-      if (response.success) {
-        setMesses(response.messes);
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const response = await messApi.getAllMesses();
+        if (response && response.success) {
+          setMesses(response.messes);
+        }
+      } catch (err) {
+        console.error('Failed to fetch messes:', err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Failed to fetch messes:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useState(() => {
+    };
     fetchData();
   }, []);
 
@@ -142,8 +140,6 @@ export default function DiscoveryPage() {
               <p className="text-xs font-semibold text-warm-500 bg-white border border-brand-surface/50 px-3 py-1.5 rounded-full shadow-premium-sm self-start sm:self-center">{filtered.length} service{filtered.length !== 1 ? 's' : ''} found</p>
             </div>
 
-           
-           {/* This are the actual cards with there ids so will be routed on messdetail page with id */}
             <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-6">
               {isLoading ? (
                 /* Skeleton Loading */
@@ -155,7 +151,11 @@ export default function DiscoveryPage() {
                   <Link key={m._id} to={ROUTES.MESS_DETAILS.replace(':id', m._id)} className={`global-card-hover overflow-hidden animate-fade-in-up flex flex-col h-full delay-${Math.min(i + 1, 6) * 100}`}>
                     {/* Card visual banner block */}
                     <div className="h-36 bg-gradient-to-tr from-brand-surface to-brand-background relative flex items-center justify-center border-b border-brand-surface/20">
-                      <span className="text-4xl">🍲</span>
+                      {m.images && m.images.length > 0 ? (
+                        <img src={m.images[0]} alt={m.messName} className="w-full h-full object-cover" />
+                      ) : (
+                        <span className="text-4xl">🍲</span>
+                      )}
                       <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm shadow-premium-sm px-2.5 py-1 rounded-full flex items-center gap-1 text-xs font-semibold text-brand-secondary">
                         <Star size={13} fill="currentColor" className="text-brand-accent" /> {m.rating || '4.5'}
                       </div>
@@ -192,10 +192,8 @@ export default function DiscoveryPage() {
               )}
             </div>
 
-         {/* // This is that case when no mess is found by using the filters  */}
-
             {/* Empty State */}
-            {filtered.length === 0 && (
+            {filtered.length === 0 && !isLoading && (
               <div className="global-card max-w-lg mx-auto mt-12 shadow-premium-sm text-center py-20">
                 <span className="text-4xl block mb-4">🔍</span>
                 <h3 className="font-display text-lg font-bold text-brand-secondary">No Mess Options Found</h3>
@@ -206,7 +204,6 @@ export default function DiscoveryPage() {
               </div>
             )}
           </section>
-
         </div>
       </main>
       <LoginModal isOpen={loginOpen} onClose={() => setLoginOpen(false)} />

@@ -9,6 +9,7 @@ const TAB_ITEMS = [
   { id: 'students', label: 'Student Directory', icon: Users },
   { id: 'billing', label: 'Billing Manager', icon: Receipt },
   { id: 'menu', label: 'Menu Schedule', icon: UtensilsCrossed },
+  { id: 'settings', label: 'Mess Profile', icon: Settings },
 ];
 
 export default function OwnerLayout({

@@ -1,10 +1,31 @@
 import api from './api';
 
 export const messApi = {
-  createMess: (data) => api.post('/mess/create', data),
-  joinMess: (joinCode) => api.post('/mess/join', { joinCode }),
-  getMessDetails: (id) => api.get(`/mess/${id}`),
-  getAllMesses: () => api.get('/mess/all'),
-};
+  createMess: async (messData) => {
+    return api.post('/mess/create', messData);
+  },
 
-export default messApi;
+  joinMess: async (joinCode) => {
+    return api.post('/mess/join', { joinCode });
+  },
+
+  getAllMesses: async () => {
+    return api.get('/mess/all');
+  },
+
+  getMyMess: async () => {
+    return api.get('/mess/my');
+  },
+
+  getMessById: async (id) => {
+    return api.get(`/mess/${id}`);
+  },
+
+  updateMess: async (messData) => {
+    return api.put('/mess/update', messData);
+  },
+
+  getSimilarMesses: async (id) => {
+    return api.get(`/mess/${id}/similar`);
+  }
+};

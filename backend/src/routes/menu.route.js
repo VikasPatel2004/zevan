@@ -32,7 +32,6 @@ router.post(
 router.get(
     '/today',
     authMiddleware,
-    roleMiddleware('RESIDENT'),
     menuController.getResidentTodayMenu
 );
 

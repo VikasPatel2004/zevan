@@ -28,6 +28,18 @@ router.get(
     messController.getAllMesses
 );
 
+// get own mess (Owner only)
+router.get('/my', authMiddleware, messController.getMyMess);
+
+// get mess by id
+router.get('/:id', messController.getMessById);
+
+// update mess (Owner only)
+router.put('/update', authMiddleware, roleMiddleware('OWNER'), messController.updateMess);
+
+// get similar messes
+router.get('/:id/similar', messController.getSimilarMesses);
+
 
 
 

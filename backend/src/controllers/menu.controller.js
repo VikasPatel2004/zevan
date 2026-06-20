@@ -209,7 +209,7 @@ exports.updateWeeklyMenu = async (req, res) => {
         const mess = await Mess.findOneAndUpdate(
             { owner: req.user.id },
             { weeklyMenu },
-            { new: true }
+            { returnDocument: 'after' }
         );
         if (!mess) {
             return res.status(404).json({ success: false, message: "Mess not found" });
@@ -223,9 +223,20 @@ exports.updateWeeklyMenu = async (req, res) => {
 // Resident gets today's menu (with fallback to weekly schedule)
 exports.getResidentTodayMenu = async (req, res) => {
     try {
-        const resident = await Resident.findOne({ user: req.user.id }).populate('mess');
-        if (!resident) {
-            return res.status(404).json({ success: false, message: "Resident not found" });
+        let messId;
+        let mess;
+
+        if (req.user.role === 'OWNER') {
+            mess = await Mess.findOne({ owner: req.user.id });
+            if (!mess) return res.status(404).json({ success: false, message: "Mess not found" });
+            messId = mess._id;
+        } else {
+            const resident = await Resident.findOne({ user: req.user.id }).populate('mess');
+            if (!resident) {
+                return res.status(404).json({ success: false, message: "Resident not found" });
+            }
+            messId = resident.mess._id;
+            mess = resident.mess;
         }
 
         const todayDate = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -233,11 +244,11 @@ exports.getResidentTodayMenu = async (req, res) => {
         const todayDayName = dayNames[new Date().getDay()];
 
         // Check if there is a specific menu for today
-        let menu = await Menu.findOne({ mess: resident.mess._id, date: todayDate });
+        let menu = await Menu.findOne({ mess: messId, date: todayDate });
         
         if (!menu) {
             // Fallback to the mess's weekly schedule for today
-            const weeklySchedule = resident.mess.weeklyMenu?.[todayDayName];
+            const weeklySchedule = mess.weeklyMenu?.[todayDayName];
             if (weeklySchedule) {
                 menu = {
                     breakfast: weeklySchedule.lunch,

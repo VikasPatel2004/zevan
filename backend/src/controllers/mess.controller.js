@@ -201,3 +201,107 @@ exports.getAllMesses = async (req, res) => {
         });
     }
 };
+
+// get current owner's mess
+exports.getMyMess = async (req, res) => {
+    try {
+        const mess = await Mess.findOne({ owner: req.user.id });
+        res.status(200).json({
+            success: true,
+            mess: mess || null
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// get single mess by ID
+exports.getMessById = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const mess = await Mess.findById(id).populate('owner', 'name');
+        
+        if (!mess) {
+            return res.status(404).json({
+                success: false,
+                message: "Mess not found"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            mess
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// update mess details (Owner only)
+exports.updateMess = async (req, res) => {
+    try {
+        const { id } = req.body;
+        const updateData = req.body;
+        delete updateData.id;
+
+        const mess = await Mess.findOneAndUpdate(
+            { _id: id, owner: req.user.id },
+            { $set: updateData },
+            { returnDocument: 'after' }
+        );
+
+        if (!mess) {
+            return res.status(404).json({
+                success: false,
+                message: "Mess not found or unauthorized"
+            });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: "Mess details updated successfully",
+            mess
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};
+
+// get similar messes in same city
+exports.getSimilarMesses = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const currentMess = await Mess.findById(id);
+        
+        if (!currentMess) {
+            return res.status(404).json({
+                success: false,
+                message: "Mess not found"
+            });
+        }
+
+        const similar = await Mess.find({
+            city: currentMess.city,
+            _id: { $ne: id }
+        }).limit(3);
+
+        res.status(200).json({
+            success: true,
+            messes: similar
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: error.message
+        });
+    }
+};

@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, Plus, X, Send, CheckCircle, Menu, ChevronLeft, Shield, Loader2 } from 'lucide-react';
+import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, Plus, X, Send, CheckCircle, Menu, ChevronLeft, Shield, Loader2, Image as ImageIcon } from 'lucide-react';
 import { OWNER_STUDENTS, OWNER_MESS, generateOwnerBilling } from '../data/mockStudents';
 import { DAYS, MONTHS, DEFAULT_OWNER_MENU, WEEKLY_MENU } from '../data/mockMenus';
 import OwnerLayout from '../layouts/OwnerLayout';
@@ -9,6 +9,8 @@ import { attendanceApi } from '../services/attendanceApi';
 import { menuApi } from '../services/menuApi';
 import { rechargeApi } from '../services/rechargeApi';
 import { useAuth } from '../contexts/AuthContext';
+import { messApi } from '../services/messApi';
+import OnboardingModal from '../components/OnboardingModal';
 
 export default function OwnerDashboard() {
   const [tab, setTab] = useState('today');
@@ -29,6 +31,10 @@ export default function OwnerDashboard() {
   const [rechargeModal, setRechargeModal] = useState({ show: false, student: null });
   const [attendanceSaved, setAttendanceSaved] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [messInfo, setMessInfo] = useState(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
+  const [newImageUrl, setNewImageUrl] = useState('');
   
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -37,16 +43,28 @@ export default function OwnerDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [dashRes, attRes, menuRes, rechStatusRes, weeklyMenuRes] = await Promise.allSettled([
+        const [dashRes, attRes, menuRes, rechStatusRes, weeklyMenuRes, messRes] = await Promise.allSettled([
           dashboardApi.getOwnerDashboard(),
           attendanceApi.getTodayAttendance(),
           menuApi.getTodayMenu(),
           rechargeApi.getResidentThaliStatus(),
-          menuApi.getWeeklyMenu()
+          menuApi.getWeeklyMenu(),
+          messApi.getMyMess()
         ]);
         
         if (dashRes.status === 'fulfilled' && dashRes.value.success) {
           setDashboardData(dashRes.value.dashboard);
+        }
+
+        if (messRes.status === 'fulfilled' && messRes.value && messRes.value.success && messRes.value.mess) {
+          setMessInfo(messRes.value.mess);
+          // Check if onboarding is needed (missing description or default description)
+          if (!messRes.value.mess.description || messRes.value.mess.description.includes('Homely kitchen')) {
+            setShowOnboarding(true);
+          }
+        } else if (messRes.status === 'fulfilled' && messRes.value && messRes.value.success && !messRes.value.mess) {
+          // If the owner has no mess linked yet, we might need to handle this
+          console.warn('Owner has no mess linked');
         }
         
         if (attRes.status === 'fulfilled' && attRes.value.success) {
@@ -200,9 +218,33 @@ export default function OwnerDashboard() {
       mobileMenuOpen={mobileMenuOpen}
       onMobileMenuToggle={setMobileMenuOpen}
     >
-      {/* ===== 1. DASHBOARD OVERVIEW ===== */}
-      {tab === 'today' && (
-        <div className="space-y-6 animate-fade-in">
+      <OnboardingModal 
+        isOpen={showOnboarding} 
+        onClose={() => setShowOnboarding(false)} 
+        messId={messInfo?._id}
+        initialData={messInfo}
+        onComplete={(updated) => setMessInfo(updated)}
+      />
+
+      {!isLoading && !messInfo ? (
+        <div className="max-w-2xl mx-auto mt-20 text-center animate-fade-in">
+          <div className="w-20 h-20 bg-brand-surface text-brand-primary rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-premium-sm rotate-3">
+            <Store size={40} />
+          </div>
+          <h1 className="font-display text-3xl font-bold text-brand-secondary mb-4">No Mess Linked</h1>
+          <p className="text-warm-500 mb-8 leading-relaxed">Your profile isn't connected to a mess yet. Create your mess now to start managing residents and menus.</p>
+          <button 
+            onClick={() => setShowOnboarding(true)}
+            className="btn btn-primary btn-xl shadow-premium-lg"
+          >
+            Create Your Mess Profile
+          </button>
+        </div>
+      ) : (
+        <>
+          {/* ===== 1. DASHBOARD OVERVIEW ===== */}
+          {tab === 'today' && (
+            <div className="space-y-6 animate-fade-in">
           {/* Join Code Banner */}
           <div className="global-card p-4 bg-brand-primary text-brand-accent flex flex-col sm:flex-row items-center justify-between gap-4 shadow-premium-md relative overflow-hidden">
             <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
@@ -542,6 +584,177 @@ export default function OwnerDashboard() {
             </button>
           </div>
         </div>
+      )}
+      {/* ===== 6. MESS PROFILE TAB ===== */}
+      {tab === 'settings' && (
+        <div className="space-y-6 animate-fade-in">
+          <div>
+            <h2 className="font-display text-xl font-bold text-brand-secondary">Mess Profile Management</h2>
+            <p className="text-xs text-warm-500 mt-1">Update how your mess appears to students on the discovery page.</p>
+          </div>
+
+          <div className="global-card p-8 space-y-8">
+            <div className="grid md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">Mess Name</label>
+                  <input 
+                    value={messInfo?.messName || ''} 
+                    onChange={e => setMessInfo({...messInfo, messName: e.target.value})}
+                    placeholder="Enter mess name..."
+                    className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">Cuisine Type</label>
+                  <select 
+                    value={messInfo?.cuisine || 'Veg'} 
+                    onChange={e => setMessInfo({...messInfo, cuisine: e.target.value})}
+                    className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none"
+                  >
+                    <option value="Veg">Pure Veg</option>
+                    <option value="Non-Veg">Non-Veg Specialty</option>
+                    <option value="Both">Both (Veg & Non-Veg)</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">Monthly Price (₹)</label>
+                  <input 
+                    type="number"
+                    value={messInfo?.monthlyPrice || ''} 
+                    onChange={e => setMessInfo({...messInfo, monthlyPrice: e.target.value})}
+                    className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">City</label>
+                  <input 
+                    type="text"
+                    value={messInfo?.city || ''} 
+                    onChange={e => setMessInfo({...messInfo, city: e.target.value})}
+                    className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">Contact Phone (WhatsApp)</label>
+                  <input 
+                    type="tel"
+                    value={messInfo?.ownerPhone || ''} 
+                    onChange={e => setMessInfo({...messInfo, ownerPhone: e.target.value})}
+                    className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none" 
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">Public Description</label>
+                  <textarea 
+                    rows={5}
+                    value={messInfo?.description || ''} 
+                    onChange={e => setMessInfo({...messInfo, description: e.target.value})}
+                    placeholder="Describe your thalis, space, and vibe..."
+                    className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none"
+                  />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">UPI ID for Payments</label>
+                    <input 
+                        type="text"
+                        value={messInfo?.upiId || ''} 
+                        onChange={e => setMessInfo({...messInfo, upiId: e.target.value})}
+                        className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none" 
+                    />
+                </div>
+                <div>
+                    <label className="block text-[10px] uppercase font-bold text-warm-500 tracking-wider mb-2">Mess Address</label>
+                    <input 
+                        type="text"
+                        value={messInfo?.address || ''} 
+                        onChange={e => setMessInfo({...messInfo, address: e.target.value})}
+                        className="w-full bg-white border border-brand-surface rounded-xl px-4 py-3 text-sm focus:border-brand-primary focus:outline-none" 
+                    />
+                </div>
+              </div>
+            </div>
+
+            {/* Image Management Section */}
+            <div className="border-t border-brand-surface/30 pt-8">
+                <h3 className="text-sm font-bold text-brand-secondary mb-4 flex items-center gap-2">
+                    <ImageIcon size={18} className="text-brand-primary" />
+                    Mess Photo Gallery
+                </h3>
+                
+                <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                    {messInfo && (messInfo.images || []).map((img, idx) => (
+                        <div key={idx} className="relative group aspect-square rounded-2xl overflow-hidden border border-brand-surface shadow-premium-sm">
+                            <img src={img} alt={`Mess ${idx}`} className="w-full h-full object-cover" />
+                            <button 
+                                onClick={() => {
+                                    const newImgs = [...messInfo.images];
+                                    newImgs.splice(idx, 1);
+                                    setMessInfo({...messInfo, images: newImgs});
+                                }}
+                                className="absolute top-2 right-2 p-1.5 bg-terra-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                            >
+                                <X size={12} />
+                            </button>
+                        </div>
+                    ))}
+                    {(messInfo && (!messInfo.images || messInfo.images.length < 5)) && (
+                        <div className="aspect-square rounded-2xl border-2 border-dashed border-brand-surface flex flex-col items-center justify-center text-warm-400 p-4">
+                            <Plus size={24} className="mb-2" />
+                            <span className="text-[10px] font-bold">Add Photo</span>
+                        </div>
+                    )}
+                </div>
+
+                <div className="flex gap-3">
+                    <input 
+                        type="text" 
+                        placeholder="Paste Image URL (e.g., https://example.com/photo.jpg)"
+                        value={newImageUrl}
+                        onChange={e => setNewImageUrl(e.target.value)}
+                        className="flex-1 bg-brand-background border border-brand-surface rounded-xl px-4 py-2.5 text-xs focus:border-brand-primary focus:outline-none"
+                    />
+                    <button 
+                        onClick={() => {
+                            if (!newImageUrl || !messInfo) return;
+                            const currentImgs = messInfo.images || [];
+                            setMessInfo({...messInfo, images: [...currentImgs, newImageUrl]});
+                            setNewImageUrl('');
+                        }}
+                        className="px-6 py-2.5 bg-brand-secondary text-white rounded-xl text-xs font-bold hover:bg-brand-primary transition-colors btn-press"
+                    >
+                        Add Image
+                    </button>
+                </div>
+                <p className="text-[9px] text-warm-400 mt-2 italic font-medium">Tip: Use Unsplash or Google Photos links for best results. Recommended 1-5 photos.</p>
+            </div>
+
+            <div className="pt-6 border-t border-brand-surface/30 flex justify-end">
+              <button 
+                onClick={async () => {
+                  setIsUpdatingProfile(true);
+                  try {
+                    await messApi.updateMess({ id: messInfo._id, ...messInfo });
+                    alert('Profile updated successfully!');
+                  } catch (err) {
+                    alert('Failed to update profile.');
+                  } finally {
+                    setIsUpdatingProfile(false);
+                  }
+                }}
+                disabled={isUpdatingProfile}
+                className="btn btn-primary btn-md min-w-[200px]"
+              >
+                {isUpdatingProfile ? <Loader2 className="animate-spin" /> : 'Save Profile Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+        </>
       )}
     </OwnerLayout>
   );
