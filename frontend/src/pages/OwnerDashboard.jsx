@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, Plus, X, Send, CheckCircle, Menu, ChevronLeft, Shield, Loader2, Image as ImageIcon } from 'lucide-react';
+import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, Plus, X, Send, CheckCircle, Menu, ChevronLeft, Shield, Loader2, Image as ImageIcon, Store } from 'lucide-react';
 import { OWNER_STUDENTS, OWNER_MESS, generateOwnerBilling } from '../data/mockStudents';
 import { DAYS, MONTHS, DEFAULT_OWNER_MENU, WEEKLY_MENU } from '../data/mockMenus';
 import OwnerLayout from '../layouts/OwnerLayout';
@@ -57,13 +57,18 @@ export default function OwnerDashboard() {
         }
 
         if (messRes.status === 'fulfilled' && messRes.value && messRes.value.success && messRes.value.mess) {
-          setMessInfo(messRes.value.mess);
-          // Check if onboarding is needed (missing description or default description)
-          if (!messRes.value.mess.description || messRes.value.mess.description.includes('Homely kitchen')) {
-            setShowOnboarding(true);
+          const messObj = messRes.value.mess;
+          setMessInfo(messObj);
+          
+          // Show onboarding auto-popup ONCE per session if mess profile description is missing/default
+          const sessionKey = `onboarding_shown_${messObj._id || 'default'}`;
+          if (!sessionStorage.getItem(sessionKey)) {
+            if (!messObj.description || messObj.description.includes('Homely kitchen')) {
+              setShowOnboarding(true);
+            }
+            sessionStorage.setItem(sessionKey, 'true');
           }
         } else if (messRes.status === 'fulfilled' && messRes.value && messRes.value.success && !messRes.value.mess) {
-          // If the owner has no mess linked yet, we might need to handle this
           console.warn('Owner has no mess linked');
         }
         
@@ -100,7 +105,7 @@ export default function OwnerDashboard() {
     };
 
     fetchData();
-  }, [mealType]);
+  }, []);
 
   const todayStudents = useMemo(() => {
     return studentsList.filter(s => {
@@ -220,10 +225,21 @@ export default function OwnerDashboard() {
     >
       <OnboardingModal 
         isOpen={showOnboarding} 
-        onClose={() => setShowOnboarding(false)} 
+        onClose={() => {
+          setShowOnboarding(false);
+          if (messInfo?._id) {
+            sessionStorage.setItem(`onboarding_shown_${messInfo._id}`, 'true');
+          }
+        }} 
         messId={messInfo?._id}
         initialData={messInfo}
-        onComplete={(updated) => setMessInfo(updated)}
+        onComplete={(updated) => {
+          setMessInfo(updated);
+          setShowOnboarding(false);
+          if (updated?._id) {
+            sessionStorage.setItem(`onboarding_shown_${updated._id}`, 'true');
+          }
+        }}
       />
 
       {!isLoading && !messInfo ? (
@@ -588,9 +604,17 @@ export default function OwnerDashboard() {
       {/* ===== 6. MESS PROFILE TAB ===== */}
       {tab === 'settings' && (
         <div className="space-y-6 animate-fade-in">
-          <div>
-            <h2 className="font-display text-xl font-bold text-brand-secondary">Mess Profile Management</h2>
-            <p className="text-xs text-warm-500 mt-1">Update how your mess appears to students on the discovery page.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h2 className="font-display text-xl font-bold text-brand-secondary">Mess Profile Management</h2>
+              <p className="text-xs text-warm-500 mt-1">Update how your mess appears to students on the discovery page.</p>
+            </div>
+            <button 
+              onClick={() => setShowOnboarding(true)}
+              className="px-4 py-2 bg-brand-surface border border-brand-surface/60 text-brand-secondary hover:bg-brand-primary hover:text-white rounded-xl text-xs font-bold transition-all btn-press shadow-premium-sm flex items-center gap-2 shrink-0 self-start sm:self-auto"
+            >
+              <Store size={16} /> Launch Profile Setup Wizard
+            </button>
           </div>
 
           <div className="global-card p-8 space-y-8">
