@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, ChevronLeft, Menu, X, Shield, LogOut } from 'lucide-react';
+import { CalendarCheck, Users, Receipt, UtensilsCrossed, Settings, ChevronLeft, Menu, X, Shield, LogOut, User } from 'lucide-react';
 import BrandLogo from '../components/BrandLogo';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -23,6 +24,7 @@ export default function OwnerLayout({
 }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -94,9 +96,47 @@ export default function OwnerLayout({
             <span className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-forest-50 border border-forest-100 text-forest-700 text-xs font-semibold">
               <Shield size={12} /> Verified Provider
             </span>
-            <Link to="/" className="w-10 h-10 bg-brand-surface rounded-full flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-colors">
-              <Settings size={18} />
-            </Link>
+            <div className="relative">
+              <button 
+                onClick={() => setShowProfileMenu(!showProfileMenu)}
+                className="w-10 h-10 bg-brand-surface rounded-full flex items-center justify-center text-brand-primary hover:bg-brand-primary hover:text-white transition-colors focus:outline-none"
+                title="Profile & Settings"
+              >
+                <Settings size={18} />
+              </button>
+
+              {showProfileMenu && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setShowProfileMenu(false)} />
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-premium-lg border border-brand-surface/60 py-3 z-50 animate-scale-in">
+                    <div className="px-4 py-2 border-b border-brand-surface/40 mb-1">
+                      <p className="text-xs font-bold text-brand-secondary truncate">{ownerName}</p>
+                      <p className="text-[10px] text-warm-400 font-medium truncate">{messName}</p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        if (onTabChange) onTabChange('settings');
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-semibold text-warm-700 hover:bg-brand-background transition-colors text-left"
+                    >
+                      <User size={15} className="text-brand-primary" />
+                      <span>View / Edit Mess Profile</span>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowProfileMenu(false);
+                        handleLogout();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-terra-600 hover:bg-terra-50 transition-colors text-left border-t border-brand-surface/30 mt-1 pt-2.5"
+                    >
+                      <LogOut size={15} />
+                      <span>Logout Session</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </header>
 

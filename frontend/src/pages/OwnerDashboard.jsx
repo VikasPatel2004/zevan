@@ -60,13 +60,10 @@ export default function OwnerDashboard() {
           const messObj = messRes.value.mess;
           setMessInfo(messObj);
           
-          // Show onboarding auto-popup ONCE per session if mess profile description is missing/default
-          const sessionKey = `onboarding_shown_${messObj._id || 'default'}`;
-          if (!sessionStorage.getItem(sessionKey)) {
-            if (!messObj.description || messObj.description.includes('Homely kitchen')) {
-              setShowOnboarding(true);
-            }
-            sessionStorage.setItem(sessionKey, 'true');
+          // Show onboarding modal ONLY ONCE when owner signs up, NOT on regular sign-ins
+          if (sessionStorage.getItem('just_signed_up_owner') === 'true') {
+            setShowOnboarding(true);
+            sessionStorage.removeItem('just_signed_up_owner');
           }
         } else if (messRes.status === 'fulfilled' && messRes.value && messRes.value.success && !messRes.value.mess) {
           console.warn('Owner has no mess linked');
@@ -146,8 +143,23 @@ export default function OwnerDashboard() {
       const response = await attendanceApi.bulkMarkAttendance(payload);
       if (response.success) {
         setAttendanceSaved(true);
-        const dashRes = await dashboardApi.getOwnerDashboard();
+        // Refresh both dashboard summary and student list to stay 100% in sync
+        const [dashRes, attRes] = await Promise.all([
+          dashboardApi.getOwnerDashboard(),
+          attendanceApi.getTodayAttendance()
+        ]);
+
         if (dashRes.success) setDashboardData(dashRes.dashboard);
+
+        if (attRes.success) {
+          setStudentsList(attRes.attendance);
+          const m = {};
+          attRes.attendance.forEach(s => {
+            m[s.id] = mealType === 'lunch' ? s.morning : s.evening;
+          });
+          setAttendanceMap(m);
+        }
+
         setTimeout(() => setAttendanceSaved(false), 2500);
       }
     } catch (err) {
@@ -225,20 +237,12 @@ export default function OwnerDashboard() {
     >
       <OnboardingModal 
         isOpen={showOnboarding} 
-        onClose={() => {
-          setShowOnboarding(false);
-          if (messInfo?._id) {
-            sessionStorage.setItem(`onboarding_shown_${messInfo._id}`, 'true');
-          }
-        }} 
+        onClose={() => setShowOnboarding(false)} 
         messId={messInfo?._id}
         initialData={messInfo}
         onComplete={(updated) => {
           setMessInfo(updated);
           setShowOnboarding(false);
-          if (updated?._id) {
-            sessionStorage.setItem(`onboarding_shown_${updated._id}`, 'true');
-          }
         }}
       />
 

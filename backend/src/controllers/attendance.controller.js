@@ -31,11 +31,14 @@ exports.markAttendance = async (req, res) => {
         });
 
         let mealsToDeduct = 0;
+        let mealsToRefund = 0;
 
         if (attendance) {
-            // Already exists logic
+            // Check for additions and removals
             if (!attendance.morning && morning) mealsToDeduct += 1;
+            if (attendance.morning && !morning) mealsToRefund += 1;
             if (!attendance.evening && evening) mealsToDeduct += 1;
+            if (attendance.evening && !evening) mealsToRefund += 1;
             
             attendance.morning = morning;
             attendance.evening = evening;
@@ -71,6 +74,20 @@ exports.markAttendance = async (req, res) => {
             }
 
             resident.mealsConsumed += mealsToDeduct;
+            await resident.save();
+        }
+
+        if (mealsToRefund > 0) {
+            let remainingRefund = mealsToRefund;
+            if (resident.overdueMeals > 0) {
+                const canReduceOverdue = Math.min(resident.overdueMeals, remainingRefund);
+                resident.overdueMeals -= canReduceOverdue;
+                remainingRefund -= canReduceOverdue;
+            }
+            if (remainingRefund > 0) {
+                resident.mealsRemaining += remainingRefund;
+            }
+            resident.mealsConsumed = Math.max(0, resident.mealsConsumed - mealsToRefund);
             await resident.save();
         }
 
@@ -139,9 +156,12 @@ exports.bulkMarkAttendance = async (req, res) => {
             let attendance = await Attendance.findOne({ resident: residentId, date: today });
 
             let mealsToDeduct = 0;
+            let mealsToRefund = 0;
             if (attendance) {
                 if (!attendance.morning && morning) mealsToDeduct += 1;
+                if (attendance.morning && !morning) mealsToRefund += 1;
                 if (!attendance.evening && evening) mealsToDeduct += 1;
+                if (attendance.evening && !evening) mealsToRefund += 1;
                 attendance.morning = morning;
                 attendance.evening = evening;
                 await attendance.save();
@@ -174,6 +194,20 @@ exports.bulkMarkAttendance = async (req, res) => {
                 }
 
                 resident.mealsConsumed += mealsToDeduct;
+                await resident.save();
+            }
+
+            if (mealsToRefund > 0) {
+                let remainingRefund = mealsToRefund;
+                if (resident.overdueMeals > 0) {
+                    const canReduceOverdue = Math.min(resident.overdueMeals, remainingRefund);
+                    resident.overdueMeals -= canReduceOverdue;
+                    remainingRefund -= canReduceOverdue;
+                }
+                if (remainingRefund > 0) {
+                    resident.mealsRemaining += remainingRefund;
+                }
+                resident.mealsConsumed = Math.max(0, resident.mealsConsumed - mealsToRefund);
                 await resident.save();
             }
         }));

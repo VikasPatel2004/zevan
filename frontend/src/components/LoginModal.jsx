@@ -68,6 +68,9 @@ export default function LoginModal({ isOpen, onClose, defaultTab = 'student', mo
       }
 
       if (response.success) {
+        if (!isLogin && response.user.role === 'OWNER') {
+          sessionStorage.setItem('just_signed_up_owner', 'true');
+        }
         login(response.token, response.user);
         onClose();
         navigate(response.user.role === 'OWNER' ? ROUTES.OWNER : ROUTES.STUDENT);
